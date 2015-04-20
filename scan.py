@@ -20,6 +20,10 @@ dataFile = signature + "Data.db"
 locationID = int(sys.argv[3])
 
 
+def dbChangeCommit(statement):
+	connectionCursor.execute(statement)
+	connection.commit()	
+
 def extractTransmissionPower(packet):
 	power = "0"
 
@@ -56,14 +60,10 @@ def pktHandler(pkt):
 			print ""
 
 			# save tupel to database
-			statement = "insert into clientProbes (clientMac, probe, locationId, power, timeFirst, timeLast) values (\"" + pkt.getlayer(Dot11).addr2 + "\", \"" + curSSID + "\", \"" + str(locationID) + "\", \"" + power + "\", \"" + str(currentTimestamp) + "\", \"" + str(currentTimestamp) + "\")"
-			connectionCursor.execute(statement)
-			connection.commit() 
+			dbChangeCommit("insert into clientProbes (clientMac, probe, locationId, power, timeFirst, timeLast) values (\"" + pkt.getlayer(Dot11).addr2 + "\", \"" + curSSID + "\", \"" + str(locationID) + "\", \"" + power + "\", \"" + str(currentTimestamp) + "\", \"" + str(currentTimestamp) + "\")")
 		else:
 			# update last seen parameter
-			statement = "UPDATE clientProbes SET timeLast='" + str(currentTimestamp) + "' WHERE clientMac='" + pkt.getlayer(Dot11).addr2 + "' AND probe='" + curSSID + "'"
-			connectionCursor.execute(statement)
-			connection.commit()
+			dbChangeCommit("UPDATE clientProbes SET timeLast='" + str(currentTimestamp) + "' WHERE clientMac='" + pkt.getlayer(Dot11).addr2 + "' AND probe='" + curSSID + "'")
 
 # connect to local database file
 connection = sqlite3.connect("data/" + dataFile)
