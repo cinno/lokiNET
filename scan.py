@@ -13,11 +13,12 @@ myTool = tools()
 clientProbes = set()
 currentTimestamp = time.time()
 currentDateAndTime = datetime.datetime.fromtimestamp(currentTimestamp).strftime("%Y-%m-%d %H:%M:%S")
-
 interface = sys.argv[1]
 signature = sys.argv[2]
 dataFile = signature + "Data.db"
 locationID = int(sys.argv[3])
+ssids = set()
+clientAPSet = set()
 
 
 def dbChangeCommit(statement):
@@ -39,6 +40,30 @@ def extractTransmissionPower(packet):
 
 
 def pktHandler(pkt):
+	# scan for datapackets
+	if pkt.haslayer(Dot11):
+		curPkt = pkt.getlayer(Dot11)
+		if curPkt.type == long(2L):
+			if curPkt.addr1 != "ff:ff:ff:ff:ff:ff" and curPkt.addr2 != "ff:ff:ff:ff:ff:ff" and curPkt.addr2 != "00:00:00:00:00:00" and curPkt.addr1 != "00:00:00:00:00:00":
+				comb1 = curPkt.addr1 + " " + curPkt.addr2
+				comb2 = curPkt.addr2 + " " + curPkt.addr1
+				if comb1 not in clientAPSet and comb2 not in clientAPSet:
+					clientAPSet.add(comb1)
+					clientAPSet.add(comb2)
+	
+					# extract transmission power
+					power = extractTransmissionPower(pkt)
+	
+					print myTool.green + "[+] " + myTool.stop + str(currentDateAndTime) + ": Data exchange between " + curPkt.addr1 + " and " + curPkt.addr2 + " (" + str(int(len(clientAPSet)/2)) + "):"
+					print myTool.green + "[+] " + myTool.stop + "power --> " + power
+					print ""
+	
+					# save tupel data to database
+					dbChangeCommit("insert into connections (macOne, macTwo, power, locationId, timeFirst, timeLast) values (\"" + curPkt.addr1 + "\", \"" + curPkt.addr2 + "\", \"" + power + "\", \"" + str(locationID) + "\", \"" + str(currentTimestamp) + "\", \"" + str(currentTimestamp) +  "\")")
+				else:
+					dbChangeCommit("UPDATE connections SET timeLast='" + str(currentTimestamp) + "' WHERE macOne='" + curPkt.addr1 + "' AND macTwo='" + curPkt.addr2 + "'")					
+					dbChangeCommit("UPDATE connections SET timeLast='" + str(currentTimestamp) + "' WHERE macOne='" + curPkt.addr2 + "' AND macTwo='" + curPkt.addr1 + "'")
+
 	# scan for probe requests
 	if pkt.haslayer(Dot11ProbeReq):
 		curSSID = "[broadcast]"
@@ -64,6 +89,53 @@ def pktHandler(pkt):
 		else:
 			# update last seen parameter
 			dbChangeCommit("UPDATE clientProbes SET timeLast='" + str(currentTimestamp) + "' WHERE clientMac='" + pkt.getlayer(Dot11).addr2 + "' AND probe='" + curSSID + "'")
+
+	# scan for accesspoints
+	if pkt.haslayer(Dot11Beacon) or pkt.haslayer(Dot11ProbeResp):
+		currSSID = "dummy"
+		channel = "null"
+		temp = pkt
+		while temp:
+			temp = temp.getlayer(Dot11Elt)
+			bssidEssidPair = pkt.getlayer(Dot11).addr3 + " " + temp.info
+			if temp and (temp.ID == 0 or temp.ID == 3) and bssidEssidPair not in ssids and temp.info:
+				# extract channel, print output and save it to database
+				if temp.ID == 3 and currSSID != "dummy":
+					# extract transmission power
+					power = extractTransmissionPower(pkt)
+
+					channel = str(int(temp.info.encode("hex"), 16))
+								
+					print myTool.green + "[+] " + myTool.stop + str(currentDateAndTime) + ": Discovered Accesspoint (" + str(len(ssids)) + "):"
+					print myTool.green + "[+] " + myTool.stop + "BSSID --> " + pkt.getlayer(Dot11).addr3
+					print myTool.green + "[+] " + myTool.stop + "ESSID --> " + currSSID
+					print myTool.green + "[+] " + myTool.stop + "channel --> " + channel
+					print myTool.green + "[+] " + myTool.stop + "power --> " + power
+			
+					cap = pkt.sprintf("{Dot11Beacon:%Dot11Beacon.cap%}\{Dot11ProbeResp:%Dot11ProbeResp.cap%}")
+					if re.search("privacy", cap):
+						encryption = "Yes"
+					else:
+						encryption = "No"
+					print myTool.green + "[+] " + myTool.stop + "encryption --> " + encryption
+					print ""
+			
+					statement = "insert into accesspoints (bssid, essid, channel, power, locationId, encryption, time) values (\"" + pkt.getlayer(Dot11).addr3 + "\", \"" + currSSID + "\", \"" + channel + "\", \"" + power + "\", \"" + str(locationID) + "\", \"" + encryption + "\", \"" + str(currentTimestamp) + "\")"
+					connectionCursor.execute(statement)
+					connection.commit()
+			
+					break
+							
+				# save SSID
+				if temp.ID == 0:
+					ssids.add(bssidEssidPair)
+					currSSID = temp.info
+					# save hidden ssids
+					for byte in bytearray(currSSID):
+						if byte == 0:
+							currSSID = "[hidden]"
+			
+			temp = temp.payload
 
 # connect to local database file
 connection = sqlite3.connect("data/" + dataFile)
