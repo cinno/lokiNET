@@ -7,6 +7,7 @@ import sys
 import signal
 import time
 import sqlite3
+import urllib2
 
 
 myTool = tools()
@@ -138,6 +139,14 @@ else:
 
 		if offlineOrOnline == "offline":
 			statement = "insert into locations (country, zipcode, city, street, streetnumber, gpsl, gpsw, time) values (\"" + country + "\", \"" + zipcode + "\", \"" + city + "\", \"" + street + "\", \"" + streetnumber + "\", \"0\", \"0\", \"" + str(currentTimestamp) + "\")"
+		else:
+			# resolve gps coordinates from address
+			url = "http://maps.googleapis.com/maps/api/geocode/xml?address=" + urllib2.quote(country) + ",+" + urllib2.quote(zipcode) + ",+" + urllib2.quote(city) + ",+" + urllib2.quote(street) + ",+" + urllib2.quote(streetnumber) + "&sensor=false"
+			# extract GPS coordinates
+			res = myTool.streetToGps(url)
+			statement = "insert into locations (country, zipcode, city, street, streetnumber, gpsl, gpsw, time) values (\"" + country + "\", \"" + zipcode + "\", \"" + city + "\", \"" + street + "\", \"" + streetnumber + "\", \"" + res[1] + "\", \"" + res[0] + "\", \"" + str(currentTimestamp) + "\")"
+			print myTool.green + "[+] " + myTool.stop + "Resolving GPS coordinates... (needs internet connection!)"
+			
 		connectionCursor.execute(statement)
 		connection.commit()    		
 		
