@@ -156,3 +156,27 @@ else:
 		
 		# execute scan script
 		os.system("./scan.py " + interface + " " + signature + " " + str(maxLocationId))
+	else:
+		# direct GPS input
+		print myTool.green + "\n[+++] " + myTool.stop + "Scanengine Selected" + myTool.green + " [+++]" + myTool.stop
+		print "[?] Type in your current location:"
+		gpsl = raw_input("# Longitude: ")
+		gpsw = raw_input("# Latitude: ")
+		print "[?] Type in the session id:"
+		signature = raw_input("# Session value: ")
+		
+		createDatabaseFile(signature)	
+		
+		# save new location to database
+		connection = sqlite3.connect("data/" + signature + "Data.db")
+		connectionCursor = connection.cursor()
+		statement = "insert into locations (country, zipcode, city, street, streetnumber, gpsl, gpsw, time) values (\"No entry.\", \"No entry.\", \"No entry.\", \"No entry.\", \"No entry.\", \"" + gpsl + "\", \"" + gpsw + "\", \"" + str(currentTimestamp) + "\")"	
+		connectionCursor.execute(statement)
+		connection.commit()
+		
+		statement = "SELECT ID FROM locations ORDER BY ID DESC LIMIT 1"
+		connectionCursor.execute(statement)
+		maxLocationId = connectionCursor.fetchall()[0][0]
+		
+		# execute scan script
+		os.system("./scan.py " + interface + " " + signature + " " + str(maxLocationId))		
