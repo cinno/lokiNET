@@ -1,0 +1,91 @@
+#!/usr/bin/python
+
+
+import cgi
+import os
+
+
+arguments = cgi.FieldStorage()
+try:
+    signature = cgi.escape(arguments["signature"].value)
+except:
+    signature = ""
+
+# HTTP header
+print "Content-Type: text/html"
+print ""
+
+saved = 0
+skip = 1
+# save signature to config file
+if signature != "":
+    f = open('webfiles/config','w')
+    f.write(signature)
+    f.close() 
+    saved = 1
+    skip = 0
+    
+# test if config file is empty
+configInfo = os.stat('webfiles/config')
+if configInfo.st_size == 0:
+    skip = 0
+
+
+print "<!DOCTYPE html>"
+print "<html>"
+
+print "<head>"
+print "<title>lokiNET (control)</title>"
+print "<link rel=\"stylesheet\" href=\"//code.jquery.com/ui/1.11.3/themes/smoothness/jquery-ui.css\">"
+print "<link rel=\"stylesheet\" type=\"text/css\" href=\"../webfiles/style.css\">"
+print "<script src=\"//code.jquery.com/jquery-1.10.2.js\"></script>"
+print "<script src=\"//code.jquery.com/ui/1.11.3/jquery-ui.js\"></script>"
+print "<script>"
+print "$(function() {"
+print "$( document ).tooltip({"
+print "track: true"
+print "});"
+print "function runEffect() {";
+print "options = { percent: 100 };";
+print "$( \"#effect\" ).show( \"drop\", options, 500, callback );";
+print "};";
+print "function callback() {";
+print "setTimeout(function() {";
+print "$( \"#effect:visible\" ).removeAttr( \"style\" ).fadeOut();";
+print "}, 3000 );";
+print "};";
+print "$( \"#effect\" ).toggle(function() {";
+print "runEffect();";
+print "});";
+print "$( \"#effect\" ).hide();";
+print "});";
+print "</script>"
+print "</head>"
+print "<body id=\"bodyLogin\">"
+print "<table border=\"0\" id=\"creationTable\">"
+print "<tr><td height=\"20%\"><img src=\"../webfiles/logo.png\" width=\"50%\"></td></tr>"
+print "<tr>"
+print "<td>"
+print "<table border=\"0\" width=\"350px\" style=\"background: #d3d3d3; border-radius: 5px;\">"
+
+print "<tr><td colspan=\"3\" height=\"30px\">"
+if saved == 1:
+    print "<div id=\"effect\" class=\"ui-widget-content ui-corner-all\">Signature saved. (redirect in a few seconds...)</div>"
+    print "<script>setTimeout(function(){window.location.href='menu.html';}, 5000);</script>"
+else:
+    print "<div align=\"center\" id=\"fontDiv\" style=\"color: #a3a3a3;\">Signature Configuration</div>"
+print "</td></tr>"
+
+print "<tr>"
+print "<form method=\"get\">"
+print "<td><input style=\"display: block;\" id=\"input\" title=\"The signature of your database file.\" type=\"text\" name=\"signature\" placeholder=\"signature\" size=\"30px\"></td>"
+print "<td><input style=\"display: block;\" id=\"loginButton\" type=\"submit\" value=\"save\"></td>"
+if skip == 1:
+    print "<td><input style=\"display: block;\" onclick=\"window.location.href='menu.html'\" id=\"loginButton\" type=\"button\" value=\"skip\"></td>"
+else:
+    print "<td><input style=\"display: block; background: #cccccc\" id=\"loginButton\" type=\"button\" value=\"skip\" title=\"No signature saved or signatore save-process running. You are not allowed to skip this step.\" ></td>"
+print "</form>"
+print "</tr>"
+print "</table>"
+print "</body>"
+print "</html>"

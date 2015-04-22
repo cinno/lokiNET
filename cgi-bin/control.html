@@ -1,0 +1,97 @@
+#!/usr/bin/python
+
+
+import cgi
+import sqlite3
+import urllib2
+from classes.tools import tools
+
+
+arguments = cgi.FieldStorage()
+try:
+	operation = int(cgi.escape(arguments["operation"].value))
+except:
+	operation = ""
+
+# get signature
+f = open('webfiles/config')
+dataFile = f.readlines()[0] + "Data.db"
+f.close() 
+
+# connect to local database file
+connection = sqlite3.connect("data/" + dataFile)
+connectionCursor = connection.cursor()
+
+if operation == 1:
+	# select all entries where no GPS data is stored
+	statement = "select country, zipcode, city, street, streetnumber, ID from locations where gpsl = 0 or gpsw = 0"
+	connectionCursor.execute(statement)
+	allNeededLocations = connectionCursor.fetchall()
+	for row in allNeededLocations:
+		urlString = "http://maps.googleapis.com/maps/api/geocode/xml?address=" + urllib2.quote(row[4]) + ",+" + urllib2.quote(row[3]) + ",+" + urllib2.quote(row[1]) + ",+" + urllib2.quote(row[2]) + ",+" + urllib2.quote(row[0]) + "&sensor=false"
+
+		# extract GPS coordinates
+		myTool = tools()
+		res = myTool.streetToGps(urlString)
+
+		# save coordinates to database
+		statement = "update locations set gpsl=\"" + res[1] + "\", gpsw=\"" + res[0] + "\" where ID=\"" + str(row[5]) + "\"" 
+		connectionCursor.execute(statement)
+		connection.commit()
+
+# HTTP header
+print "Content-Type: text/html"
+print ""
+
+print "<!DOCTYPE html>"
+print "<html>"
+
+print "<head>"
+print "<title>lokiNET (control)</title>"
+print "<link rel=\"stylesheet\" href=\"//code.jquery.com/ui/1.11.3/themes/smoothness/jquery-ui.css\">"
+print "<link rel=\"stylesheet\" type=\"text/css\" href=\"../webfiles/style.css\">"
+print "<script src=\"//code.jquery.com/jquery-1.10.2.js\"></script>"
+print "<script src=\"//code.jquery.com/ui/1.11.3/jquery-ui.js\"></script>"
+print "<script>"
+print "$(function() {"
+print "$( document ).tooltip({"
+print "track: true"
+print "});"
+print "function runEffect() {";
+print "options = { percent: 100 };";
+print "$( \"#effect\" ).show( \"drop\", options, 500, callback );";
+print "};";
+print "function callback() {";
+print "setTimeout(function() {";
+print "$( \"#effect:visible\" ).removeAttr( \"style\" ).fadeOut();";
+print "}, 3000 );";
+print "};";
+print "$( \"#effect\" ).toggle(function() {";
+print "runEffect();";
+print "});";
+print "$( \"#effect\" ).hide();";
+print "});";
+print "</script>"
+print "</head>"
+print "<body id=\"bodyLogin\">"
+print "<table border=\"0\" id=\"creationTable\">"
+print "<tr><td height=\"20%\"><img src=\"../webfiles/logo.png\" width=\"50%\"></td></tr>"
+print "<tr>"
+print "<td>"
+print "<table border=\"0\" width=\"350px\" style=\"background: #d3d3d3; border-radius: 5px;\">"
+print "<tr><td height=\"30px\">"
+if operation == 1:
+	print "<div id=\"effect\" class=\"ui-widget-content ui-corner-all\">GPS coordinates resolved.</div>"
+	print "<script>setTimeout(function(){window.location.href='control.html';}, 5000);</script>"
+else:
+	print "<div align=\"center\" id=\"fontDiv\" style=\"color: #a3a3a3;\">Database</div></td>"
+print "</tr>"
+print "<tr><td><input style=\"display: block; width: 100%;\" id=\"refButton\" onclick=\"window.location.href='control.html?operation=1'\" type=\"button\" value=\"convert address to GPS (all database entries)\"></td></tr>"
+print "<tr><td><input style=\"display: block; width: 100%;\" id=\"refButton\" onclick=\"window.location.href='index.html'\" type=\"button\" value=\"set signature\"></td></tr>"
+print "<tr><td><div></div></td></tr>"
+print "<tr><td><input style=\"display: block; width: 100%;\" id=\"loginButton\" onclick=\"window.location.href='menu.html'\" type=\"button\" value=\"back\"></td></tr>"
+print "</td>"
+print "</tr>"
+print "</table>"
+print "</body>"
+print "</html>"
