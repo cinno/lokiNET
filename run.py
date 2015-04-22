@@ -66,21 +66,13 @@ else:
 
 	# start evaluation webinterface
         if "-web" in sys.argv or "--webinterface" in sys.argv:
-		signature = raw_input("# Session value: ")
-		connection = sqlite3.connect("data/" + signature + "Data.db")
-		connectionCursor = connection.cursor()
-		statement = "select * from locations"
-		try:
-			connectionCursor.execute(statement)
-			result = connectionCursor.fetchall()			
+		try:			
 			print myTool.green + "[+] " + myTool.stop + "Starting webinterface for database analysis. You should point your browser to:"
 			print myTool.green + "[+]" + myTool.stop + " http://127.0.0.1:8000/cgi-bin/index.html"
 			os.system("python -m CGIHTTPServer")
 			sys.exit()
 		except:
 			print myTool.fail + "[-] " + myTool.stop + "Webserver could not be started!"
-			print myTool.fail + "[-] " + myTool.stop + "Database file does not exists or is empty."
-			print myTool.fail + "[-] " + myTool.stop + "Collect some data first..."
 			sys.exit()
 
 	# use offline mode
