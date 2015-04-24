@@ -11,6 +11,9 @@ This application is part of my master thesis.
 <li>You can run the program using the run-script. To list all available commands use the "-h" option. If you run the program in offline mode it will not try to translate a address into GPS coordinates (It can be translated afterwards using the webinterface).</li>
 </ul>
 <hr>
+<h2>Scenario:</h2>
+An attacker may create some small linux devices where this software is installed and configured. Then he places the devices at different locations and let them do their "work". After a while he collect the devices, migrates all database files to one and analyze the data. Then he is able to reconstruct wifi client movements and behaviour.
+<hr>
 <h2>Requirements:</h2>
 <ul>
 <li>Linux system</li>
