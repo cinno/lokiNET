@@ -16,7 +16,6 @@ invalidString = myTool.fail + "[-]" + myTool.stop + " Invalid parameter combinat
 offlineOrOnline = "offline"
 gpsOrStreet = "address"
 currentTimestamp = time.time()
-interface = sys.argv[1]
 dataFile = "Data.db"
 
 
@@ -40,7 +39,8 @@ def ctrlc_handler(self, frm):
 if len(sys.argv) < 2:
         sys.exit(usageString + "\n-h: help menu")
 else:
-        signal.signal(signal.SIGINT, ctrlc_handler)
+	signal.signal(signal.SIGINT, ctrlc_handler)
+	interface = sys.argv[1]
 
 	# help menu
         if "-h" in sys.argv or "--help" in sys.argv:
