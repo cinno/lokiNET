@@ -1,0 +1,111 @@
+#!/usr/bin/python
+
+
+import datetime
+import sqlite3
+
+
+# get signature
+f = open('webfiles/config')
+dataFile = f.readlines()[0] + "Data.db"
+f.close() 
+
+# connect to local database file
+connection = sqlite3.connect("data/" + dataFile)
+connectionCursor = connection.cursor()
+
+# HTTP header
+print "Content-Type: text/html"
+print ""
+
+print "<!DOCTYPE html>"
+print "<html>"
+
+print "<head>"
+print "<title>lokiNET (control)</title>"
+print "<link rel=\"stylesheet\" href=\"//code.jquery.com/ui/1.11.3/themes/smoothness/jquery-ui.css\">"
+print "<link rel=\"stylesheet\" type=\"text/css\" href=\"../webfiles/style.css\">"
+print "<script src=\"//code.jquery.com/jquery-1.10.2.js\"></script>"
+print "<script src=\"//code.jquery.com/ui/1.11.3/jquery-ui.js\"></script>"
+print "<script>"
+print "$(function() {"
+print "$( document ).tooltip({"
+print "track: true"
+print "});"
+print "});";
+print "</script>"
+print "</head>"
+print "<body id=\"bodyLogin\">"
+print "<table border=\"0\" id=\"creationTable\" style=\"left: 20%;	top: 5%;\">"
+print "<tr><td height=\"20%\"><img src=\"../webfiles/logo.png\" width=\"50%\"></td></tr>"
+print "<tr>"
+print "<td>"
+print "<table border=\"0\" width=\"350px\" style=\"background: #d3d3d3; border-radius: 5px;\">"
+print "<tr><td colspan=\"2\">"
+
+# include map header
+print "<script src=\"http://maps.google.com/maps/api/js?sensor=false\" type=\"text/javascript\"></script>"
+print "<div id=\"map\" style=\"width: 1024px; height: 550px;\"></div>"
+
+# get all the locations from database
+statement = "select country, zipcode, city, street, streetnumber, gpsl, gpsw, time from locations"
+connectionCursor.execute(statement)
+resultAllLocations = connectionCursor.fetchall()
+
+details = []
+count = 0
+# get location details
+for loc in range(1, len(resultAllLocations) + 1):
+        statement = "select ID from accesspoints where locationID=\"" + str(loc) + "\""
+        connectionCursor.execute(statement)        
+        numAPs = connectionCursor.fetchall()
+        statement = "select ID from clientProbes where locationID=\"" + str(loc) + "\""
+        connectionCursor.execute(statement)        
+        numProbes = connectionCursor.fetchall()        
+        statement = "select ID from connections where locationID=\"" + str(loc) + "\""
+        connectionCursor.execute(statement)        
+        numConnections = connectionCursor.fetchall()        
+        details.insert(count, "<p>Access Points: " + str(len(numAPs)) + "<br>Probes: " + str(len(numProbes)) + "<br>Connections: " + str(len(numConnections)))
+        count += 1
+        
+locString = "<script type=\"text/javascript\">\nvar locations = [\n"
+run = 1
+l = 0
+w = 0
+for tupel in resultAllLocations:
+        locString += "['" + tupel[0] + "<br>" + tupel[1] + ", <b>" + tupel[2] + "</b><br>" + tupel[3] + " " + tupel[4] + "<br><b>" + datetime.datetime.fromtimestamp(float(tupel[7])).strftime("%Y-%m-%d %H:%M:%S") + "</b>" + details[run-1] + "' ," + tupel[6] + ", " + tupel[5] + ", " + str(run) + "],\n"
+        run += 1
+        l += float(tupel[5])
+        w += float(tupel[6])
+locString = locString[:len(locString)-2:]
+locString += "\n];"
+middlePositionL = l / (run - 1)
+middlePositionW = w / (run - 1)
+print locString
+
+print "var map = new google.maps.Map(document.getElementById('map'), {"
+print "  zoom: 10,"
+print "  center: new google.maps.LatLng(" + str(middlePositionW) + ", " + str(middlePositionL) + "),"
+print "  mapTypeId: google.maps.MapTypeId.ROADMAP"
+print "});"
+print "var infowindow = new google.maps.InfoWindow();"
+print "var marker, i;"
+print "for (i = 0; i < locations.length; i++) {"
+print "  marker = new google.maps.Marker({"
+print "    position: new google.maps.LatLng(locations[i][1], locations[i][2]),"
+print "    map: map"
+print "  });"
+print "  google.maps.event.addListener(marker, 'click', (function(marker, i) {"
+print "    return function() {"
+print "      infowindow.setContent(locations[i][0]);"
+print "      infowindow.open(map, marker);"
+print "    }"
+print "  })(marker, i));"
+print "}"
+print "</script>"
+
+print "</td></tr>"
+print "<tr><td width=\"20%\"><input style=\"display: block; width: 100%;\" id=\"loginButton\" onclick=\"window.location.href='menu.html'\" type=\"button\" value=\"back\"></td><td></td></tr>"
+print "</table>"
+print "</body>"
+print "</html>"
