@@ -1,5 +1,11 @@
 #!/usr/bin/python
 
+
+# get signature
+f = open('webfiles/config')
+dataFile = f.readlines()[0] + "Data.db"
+f.close() 
+
 # HTTP header
 print "Content-Type: text/html"
 print ""
@@ -32,7 +38,8 @@ print "<tr><td height=\"20%\"><img src=\"../webfiles/logo.png\" width=\"50%\"></
 print "<tr>"
 print "<td width=\"25%\" style=\"vertical-align: top;\">"
 print "<ul id=\"menu\">"
-print "<li class=\"ui-widget-header\"><div id=\"fontDiv\">Database</div></li>"
+print "<li class=\"ui-widget-header\"><div id=\"fontDiv\" style=\"font-size: 10px;\">Loaded Database: " + dataFile + "</div></li>"
+print "<li class=\"ui-widget-header\"><div id=\"fontDiv\">Database Content</div></li>"
 print "<li onclick=\"window.location.href='database.html'\" style=\"font-family:  Arial, sans-serif; font-size: 14px;\"><div id=\"fontDiv\">Tables</div></li>"
 print "<li style=\"font-family:  Arial, sans-serif; font-size: 14px;\" onclick=\"window.location.href='largemap.html'\">Large Map</li>"
 print "<li class=\"ui-widget-header\"><div id=\"fontDiv\">Configuration and more ...</div></li>"

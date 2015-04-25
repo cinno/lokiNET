@@ -84,7 +84,7 @@ if operation == 1:
 	print "<div id=\"effect\" class=\"ui-widget-content ui-corner-all\">GPS coordinates resolved.</div>"
 	print "<script>setTimeout(function(){window.location.href='control.html';}, 5000);</script>"
 else:
-	print "<div align=\"center\" id=\"fontDiv\" style=\"color: #a3a3a3;\">Database</div></td>"
+	print "<div align=\"center\" id=\"fontDiv\" style=\"color: #a3a3a3;\">Database: " + dataFile + "</div></td>"
 print "</tr>"
 print "<tr><td><input style=\"display: block; width: 100%;\" id=\"refButton\" onclick=\"window.location.href='control.html?operation=1'\" type=\"button\" value=\"convert address to GPS (all database entries)\"></td></tr>"
 print "<tr><td><input style=\"display: block; width: 100%;\" id=\"refButton\" onclick=\"window.location.href='index.html'\" type=\"button\" value=\"set signature\"></td></tr>"
