@@ -34,5 +34,15 @@ try:
 	print myTool.green + "[+] " + myTool.stop + "CHMOD(+x): cgi-bin/menu.html -> Success!"
 except:
 	print myTool.fail + "[-] " + myTool.stop + "CHMOD(+x): cgi-bin/menu.html -> FAIL!"
+try:
+	os.system("chmod +x cgi-bin/database.html")
+	print myTool.green + "[+] " + myTool.stop + "CHMOD(+x): cgi-bin/database.html -> Success!"
+except:
+	print myTool.fail + "[-] " + myTool.stop + "CHMOD(+x): cgi-bin/database.html -> FAIL!"
+try:
+	os.system("chmod +x cgi-bin/largemap.html")
+	print myTool.green + "[+] " + myTool.stop + "CHMOD(+x): cgi-bin/largemap.html -> Success!"
+except:
+	print myTool.fail + "[-] " + myTool.stop + "CHMOD(+x): cgi-bin/largemap.html -> FAIL!"
 
 print myTool.green + "[+] " + myTool.stop + "All chmods set."
