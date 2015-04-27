@@ -34,7 +34,18 @@ print "<script type=\"text/javascript\" language=\"javascript\" src=\"//cdn.data
 print "<script>"
 print "$(function() {"
 print "$( document ).tooltip({"
-print "track: true"
+print "track: true,"
+print "items: \"[data-geo]\","
+print "content: function() {"
+print "var element = $( this );"
+print "if ( element.is( \"[data-geo]\" ) ) {"
+print "var text = element.text();"
+print "return \"<img class='map' alt='\" + text +"
+print "\"' src='http://maps.google.com/maps/api/staticmap?\" +"
+print "\"zoom=12&size=300x300&maptype=roadmap&sensor=false&center=\" +"
+print "text + \"&markers=size:mid%7Ccolor:red%7Clabel:1%7C\" + text + \"'>\";"
+print "}"
+print "}"
 print "});"
 print "$( \"#tabs\" ).tabs()"
 print "});"
@@ -69,8 +80,21 @@ statement = "select bssid, essid, channel, power, encryption, time, locationId f
 connectionCursor.execute(statement)
 allAccessPoints = connectionCursor.fetchall()
 for i in range(0, len(allAccessPoints)):
+    # get coordinates
+    statement = "select gpsl, gpsw from locations where ID=\"" + str(allAccessPoints[i][6]) + "\""
+    connectionCursor.execute(statement)
+    curLocation = connectionCursor.fetchall()    
     print "<tr>"
-    print "<td><div id=\"fontDiv\">" + str(allAccessPoints[i][0]) + "</div></td><td><div id=\"fontDiv\">" + str(allAccessPoints[i][1]) + "</div></td><td><div id=\"fontDiv\">" + str(allAccessPoints[i][2]) + "</div></td><td><div id=\"fontDiv\">" + str(allAccessPoints[i][3]) + "</div></td><td><div id=\"fontDiv\">" + str(allAccessPoints[i][4]) + "</div></td><td><div id=\"fontDiv\">" + str(datetime.datetime.fromtimestamp(float(allAccessPoints[i][5])).strftime("%Y-%m-%d %H:%M:%S")) + "</div></td><td><div id=\"fontDiv\">" + str(allAccessPoints[i][6]) + "</div></td>"       
+    print "<td><div id=\"fontDiv\">" + str(allAccessPoints[i][0]) + "</div></td><td><div id=\"fontDiv\">"
+    # CRITICAL!!
+    #
+    try:
+        print str(allAccessPoints[i][1])
+    except:
+        print "!!! ASCII ERROR !!!"
+    #
+    #
+    print "</div></td><td><div id=\"fontDiv\">" + str(allAccessPoints[i][2]) + "</div></td><td><div id=\"fontDiv\">" + str(allAccessPoints[i][3]) + "</div></td><td><div id=\"fontDiv\">" + str(allAccessPoints[i][4]) + "</div></td><td><div id=\"fontDiv\">" + str(datetime.datetime.fromtimestamp(float(allAccessPoints[i][5])).strftime("%Y-%m-%d %H:%M:%S")) + "</div></td><td><div id=\"fontDiv\">" + "<a href=\"http://maps.google.com/maps?q=" + curLocation[0][1] + "," + curLocation[0][0] + "\" data-geo=\"\" target=\"_blank\">" + curLocation[0][1] + "," + curLocation[0][0] + "</a></div></td>"       
     print "</tr>"
 print "</tbody>"
 print "</table>"
@@ -86,8 +110,21 @@ statement = "select clientMac, probe, power, timeFirst, timeLast, locationId fro
 connectionCursor.execute(statement)
 allAccessPoints = connectionCursor.fetchall()
 for i in range(0, len(allAccessPoints)):
+    # get coordinates
+    statement = "select gpsl, gpsw from locations where ID=\"" + str(allAccessPoints[i][5]) + "\""
+    connectionCursor.execute(statement)
+    curLocation = connectionCursor.fetchall()
     print "<tr>"
-    print "<td><div id=\"fontDiv\">" + str(allAccessPoints[i][0]) + "</div></td><td><div id=\"fontDiv\">" + str(allAccessPoints[i][1]) + "</div></td><td><div id=\"fontDiv\">" + str(allAccessPoints[i][2]) + "</div></td><td><div id=\"fontDiv\">" + str(datetime.datetime.fromtimestamp(float(allAccessPoints[i][3])).strftime("%Y-%m-%d %H:%M:%S")) + "</div></td><td><div id=\"fontDiv\">" + str(datetime.datetime.fromtimestamp(float(allAccessPoints[i][4])).strftime("%Y-%m-%d %H:%M:%S")) + "</div></td><td><div id=\"fontDiv\">" + str(allAccessPoints[i][5]) + "</div></td>"
+    print "<td><div id=\"fontDiv\">" + str(allAccessPoints[i][0]) + "</div></td><td><div id=\"fontDiv\">"
+    # CRITICAL!!
+    #    
+    try:    
+        print str(allAccessPoints[i][1])
+    except:
+        print "!!! ASCII ERROR !!!"
+    # CRITICAL!!
+    #
+    print "</div></td><td><div id=\"fontDiv\">" + str(allAccessPoints[i][2]) + "</div></td><td><div id=\"fontDiv\">" + str(datetime.datetime.fromtimestamp(float(allAccessPoints[i][3])).strftime("%Y-%m-%d %H:%M:%S")) + "</div></td><td><div id=\"fontDiv\">" + str(datetime.datetime.fromtimestamp(float(allAccessPoints[i][4])).strftime("%Y-%m-%d %H:%M:%S")) + "</div></td><td><div id=\"fontDiv\">" + "<a href=\"http://maps.google.com/maps?q=" + curLocation[0][1] + "," + curLocation[0][0] + "\" data-geo=\"\" target=\"_blank\">" + curLocation[0][1] + "," + curLocation[0][0] + "</a></div></td>"
     print "</tr>"
 print "</tbody>"
 print "</table>"
@@ -103,8 +140,12 @@ statement = "select macOne, macTwo, power, timeFirst, timeLast, locationId from 
 connectionCursor.execute(statement)
 allAccessPoints = connectionCursor.fetchall()
 for i in range(0, len(allAccessPoints)):
+    # get coordinates
+    statement = "select gpsl, gpsw from locations where ID=\"" + str(allAccessPoints[i][5]) + "\""
+    connectionCursor.execute(statement)
+    curLocation = connectionCursor.fetchall()
     print "<tr>"
-    print "<td><div id=\"fontDiv\">" + str(allAccessPoints[i][0]) + "</div></td><td><div id=\"fontDiv\">" + str(allAccessPoints[i][1]) + "</div></td><td><div id=\"fontDiv\">" + str(allAccessPoints[i][2]) + "</div></td><td><div id=\"fontDiv\">" + str(datetime.datetime.fromtimestamp(float(allAccessPoints[i][3])).strftime("%Y-%m-%d %H:%M:%S")) + "</div></td><td><div id=\"fontDiv\">" + str(datetime.datetime.fromtimestamp(float(allAccessPoints[i][4])).strftime("%Y-%m-%d %H:%M:%S")) + "</div></td><td><div id=\"fontDiv\">" + str(allAccessPoints[i][5]) + "</div></td>"
+    print "<td><div id=\"fontDiv\">" + str(allAccessPoints[i][0]) + "</div></td><td><div id=\"fontDiv\">" + str(allAccessPoints[i][1]) + "</div></td><td><div id=\"fontDiv\">" + str(allAccessPoints[i][2]) + "</div></td><td><div id=\"fontDiv\">" + str(datetime.datetime.fromtimestamp(float(allAccessPoints[i][3])).strftime("%Y-%m-%d %H:%M:%S")) + "</div></td><td><div id=\"fontDiv\">" + str(datetime.datetime.fromtimestamp(float(allAccessPoints[i][4])).strftime("%Y-%m-%d %H:%M:%S")) + "</div></td><td><div id=\"fontDiv\">" + "<a href=\"http://maps.google.com/maps?q=" + curLocation[0][1] + "," + curLocation[0][0] + "\" data-geo=\"\" target=\"_blank\">" + curLocation[0][1] + "," + curLocation[0][0] + "</a></div></td>"
     print "</tr>"
 print "</tbody>"
 print "</table>"
