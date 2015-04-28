@@ -66,7 +66,19 @@ def pktHandler(pkt):
 			if curPkt.addr1 != "ff:ff:ff:ff:ff:ff" and curPkt.addr2 != "ff:ff:ff:ff:ff:ff" and curPkt.addr2 != "00:00:00:00:00:00" and curPkt.addr1 != "00:00:00:00:00:00":
 				comb1 = curPkt.addr1 + " " + curPkt.addr2
 				comb2 = curPkt.addr2 + " " + curPkt.addr1
-				if comb1 not in clientAPSet and comb2 not in clientAPSet:
+				# look if combination is already in database
+				combInDB = 0
+				statement = "select ID from connections where macOne=\"" + curPkt.addr1 + "\" and macTwo=\"" + curPkt.addr2 + "\""
+				connectionCursor.execute(statement)
+				combInDatabase = connectionCursor.fetchall()	
+				if len(combInDatabase) != 0:
+					combInDB = 1
+				statement = "select ID from connections where macOne=\"" + curPkt.addr2 + "\" and macTwo=\"" + curPkt.addr1 + "\""
+				connectionCursor.execute(statement)
+				combInDatabase = connectionCursor.fetchall()
+				if len(combInDatabase) != 0:
+					combInDB = 1
+				if comb1 not in clientAPSet and comb2 not in clientAPSet and combInDB == 0:
 					clientAPSet.add(comb1)
 					clientAPSet.add(comb2)
 	
@@ -85,13 +97,16 @@ def pktHandler(pkt):
 
 	# scan for probe requests
 	if pkt.haslayer(Dot11ProbeReq):
-		curSSID = "[broadcast]"
-   
+		curSSID = "[broadcast]"		
  		if len(pkt.getlayer(Dot11ProbeReq).info) > 0:
 			curSSID = pkt.getlayer(Dot11ProbeReq).info
 
 		newCombination = pkt.getlayer(Dot11).addr2 + " " + curSSID
-		if newCombination not in clientProbes:
+		# look if combination is already in database
+		statement = "select ID from clientProbes where clientMac=\"" + pkt.getlayer(Dot11).addr2 + "\" and probe=\"" + curSSID + "\""
+		connectionCursor.execute(statement)
+		combInDatabase = connectionCursor.fetchall()
+		if newCombination not in clientProbes and len(combInDatabase) == 0:
 			clientProbes.add(newCombination)
 
 			# extract transmission power
