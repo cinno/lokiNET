@@ -40,6 +40,10 @@ ssids = set()
 clientAPSet = set()
 
 
+def dbSelectCommit(statement):
+	connectionCursor.execute(statement)
+	return connectionCursor.fetchall()	
+
 def dbChangeCommit(statement):
 	connectionCursor.execute(statement)
 	connection.commit()	
@@ -68,14 +72,10 @@ def pktHandler(pkt):
 				comb2 = curPkt.addr2 + " " + curPkt.addr1
 				# look if combination is already in database
 				combInDB = 0
-				statement = "select ID from connections where macOne=\"" + curPkt.addr1 + "\" and macTwo=\"" + curPkt.addr2 + "\""
-				connectionCursor.execute(statement)
-				combInDatabase = connectionCursor.fetchall()	
+				combInDatabase = dbSelectCommit("select ID from connections where macOne=\"" + curPkt.addr1 + "\" and macTwo=\"" + curPkt.addr2 + "\"")	
 				if len(combInDatabase) != 0:
 					combInDB = 1
-				statement = "select ID from connections where macOne=\"" + curPkt.addr2 + "\" and macTwo=\"" + curPkt.addr1 + "\""
-				connectionCursor.execute(statement)
-				combInDatabase = connectionCursor.fetchall()
+				combInDatabase = dbSelectCommit("select ID from connections where macOne=\"" + curPkt.addr2 + "\" and macTwo=\"" + curPkt.addr1 + "\"")
 				if len(combInDatabase) != 0:
 					combInDB = 1
 				if comb1 not in clientAPSet and comb2 not in clientAPSet and combInDB == 0:
@@ -103,9 +103,7 @@ def pktHandler(pkt):
 
 		newCombination = pkt.getlayer(Dot11).addr2 + " " + curSSID
 		# look if combination is already in database
-		statement = "select ID from clientProbes where clientMac=\"" + pkt.getlayer(Dot11).addr2 + "\" and probe=\"" + curSSID + "\""
-		connectionCursor.execute(statement)
-		combInDatabase = connectionCursor.fetchall()
+		combInDatabase = dbSelectCommit("select ID from clientProbes where clientMac=\"" + pkt.getlayer(Dot11).addr2 + "\" and probe=\"" + curSSID + "\"")
 		if newCombination not in clientProbes and len(combInDatabase) == 0:
 			clientProbes.add(newCombination)
 
@@ -154,9 +152,7 @@ def pktHandler(pkt):
 					print myTool.green + "[+] " + myTool.stop + "encryption --> " + encryption
 					print ""
 			
-					statement = "insert into accesspoints (bssid, essid, channel, power, locationId, encryption, time) values (\"" + pkt.getlayer(Dot11).addr3 + "\", \"" + currSSID + "\", \"" + channel + "\", \"" + power + "\", \"" + str(locationID) + "\", \"" + encryption + "\", \"" + str(currentTimestamp) + "\")"
-					connectionCursor.execute(statement)
-					connection.commit()
+					dbChangeCommit("insert into accesspoints (bssid, essid, channel, power, locationId, encryption, time) values (\"" + pkt.getlayer(Dot11).addr3 + "\", \"" + currSSID + "\", \"" + channel + "\", \"" + power + "\", \"" + str(locationID) + "\", \"" + encryption + "\", \"" + str(currentTimestamp) + "\")")
 			
 					break
 							
