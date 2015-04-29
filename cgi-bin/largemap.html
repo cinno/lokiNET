@@ -21,7 +21,14 @@
 
 import datetime
 import sqlite3
+import cgi
 
+
+arguments = cgi.FieldStorage()
+try:
+        search = cgi.escape(arguments["search"].value)
+except:
+        search = ""
 
 # get signature
 f = open('webfiles/config')
@@ -31,6 +38,34 @@ f.close()
 # connect to local database file
 connection = sqlite3.connect("data/" + dataFile)
 connectionCursor = connection.cursor()
+
+statement = "select distinct bssid from accesspoints"
+connectionCursor.execute(statement)
+allMacsAPs = connectionCursor.fetchall()
+
+statement = "select distinct essid from accesspoints"
+connectionCursor.execute(statement)
+allEssidsAPs = connectionCursor.fetchall()
+
+statement = "select distinct clientMac from clientProbes"
+connectionCursor.execute(statement)
+allMacsCPs = connectionCursor.fetchall()
+
+statement = "select distinct probe from clientProbes"
+connectionCursor.execute(statement)
+allProbes = connectionCursor.fetchall()
+
+connectionMACs = set()
+statement = "select distinct macOne from connections"
+connectionCursor.execute(statement)
+macConnectionOne = connectionCursor.fetchall()
+statement = "select distinct macTwo from connections"
+connectionCursor.execute(statement)
+macConnectionTwo = connectionCursor.fetchall()
+for row in macConnectionOne:
+        connectionMACs.add(row[0])
+for row in macConnectionTwo:
+        connectionMACs.add(row[0])
 
 # HTTP header
 print "Content-Type: text/html"
@@ -46,7 +81,56 @@ print "<link rel=\"stylesheet\" type=\"text/css\" href=\"../webfiles/style.css\"
 print "<script src=\"//code.jquery.com/jquery-1.10.2.js\"></script>"
 print "<script src=\"//code.jquery.com/ui/1.11.3/jquery-ui.js\"></script>"
 print "<script>"
+print "$.widget( \"custom.catcomplete\", $.ui.autocomplete, {"
+print "_create: function() {"
+print "this._super();"
+print "this.widget().menu( \"option\", \"items\", \"> :not(.ui-autocomplete-category)\" );"
+print "},"
+print "_renderMenu: function( ul, items ) {"
+print "var that = this,"
+print "currentCategory = \"\";"
+print "$.each( items, function( index, item ) {"
+print "var li;"
+print "if ( item.category != currentCategory ) {"
+print "ul.append( \"<li class='ui-autocomplete-category'>\" + item.category + \"</li>\" );"
+print "currentCategory = item.category;"
+print "}"
+print "li = that._renderItemData( ul, item );"
+print "if ( item.category ) {"
+print "li.attr( \"aria-label\", item.category + \" : \" + item.label );"
+print "}"
+print "});"
+print "}"
+print "});"
 print "$(function() {"
+print "var data = ["
+for row in allMacsAPs:
+        print "{ label: \"" + str(row[0]) + "\", category: \"BSSID\" },"
+for row in allEssidsAPs:
+        try:
+                print "{ label: \"" + str(row[0]) + "\", category: \"ESSID\" },"
+        except:
+                # CRITICAL!!!!
+                #
+                print "{ label: \"!!! ASCII ERROR !!! \", category: \"ESSID\" },"
+                #
+for row in allMacsCPs:
+        print "{ label: \"" + str(row[0]) + "\", category: \"client MAC\" },"
+for row in connectionMACs:
+        print "{ label: \"" + str(row) + "\", category: \"connection MAC\" },"
+for row in allProbes:
+        try:
+                print "{ label: \"" + str(row[0]) + "\", category: \"client probes\" },"
+        except:
+                # CRITICAL!!!!
+                #
+                print "{ label: \"!!! ASCII ERROR !!! \", category: \"client probes\" },"
+                #
+print "];"
+print "$( \"#search\" ).catcomplete({"
+print "delay: 0,"
+print "source: data"
+print "});"
 print "$( document ).tooltip({"
 print "track: true"
 print "});"
@@ -66,6 +150,15 @@ print "}"
 print "});"
 print "});";
 print "</script>"
+print "<style>"
+print ".ui-autocomplete-category {"
+print "font-weight: bold;"
+print "padding: .2em .4em;"
+print "margin: .8em 0 .2em;"
+print "font-size: 14px;"
+print "line-height: 1.5;"
+print "}"
+print "</style>"
 print "</head>"
 print "<body id=\"bodyLogin\">"
 oneValueIsZero = 0
@@ -81,16 +174,45 @@ print "<tr><td height=\"20%\"><img src=\"../webfiles/logo.png\" width=\"50%\"></
 print "<tr>"
 print "<td>"
 print "<table border=\"0\" width=\"350px\" style=\"background: #d3d3d3; border-radius: 5px;\">"
+print "<tr><form method=\"get\"><td><input style=\"display: block;\" name=\"search\" class=\"input\" value=\"" + search + "\" id=\"search\" placeholder=\"search\"></td><td><input style=\"display: block; width: 100px;\" id=\"refButton\" type=\"submit\" value=\"search\"></td></form></tr>"
 print "<tr><td colspan=\"2\">"
 
 # include map header
 print "<script src=\"http://maps.google.com/maps/api/js?sensor=false\" type=\"text/javascript\"></script>"
 print "<div id=\"map\" style=\"width: 1024px; height: 550px;\"></div>"
 
-# get all the locations from database
-statement = "select country, zipcode, city, street, streetnumber, gpsl, gpsw, time from locations"
-connectionCursor.execute(statement)
-resultAllLocations = connectionCursor.fetchall()
+if search != "":
+        locationSet = set()
+        statement = "select locationId from accesspoints where bssid=\"" + search + "\" or essid=\"" + search + "\""
+        connectionCursor.execute(statement)
+        locations = connectionCursor.fetchall()
+        for i in locations:
+                locationSet.add(i[0])
+        statement = "select locationID from connections where macOne=\"" + search + "\" or macTwo=\"" + search + "\""
+        connectionCursor.execute(statement)
+        locations = connectionCursor.fetchall()
+        for i in locations:
+                locationSet.add(i[0])
+        statement = "select locationId from clientProbes where clientMac=\"" + search + "\" or probe=\"" + search + "\""
+        connectionCursor.execute(statement)
+        locations = connectionCursor.fetchall()
+        for i in locations:
+                locationSet.add(i[0])
+        # build where clause
+        whereString = ""
+        for item in locationSet:
+                if whereString == "":
+                        whereString += "ID=\"" + str(item) + "\""
+                else:
+                        whereString += " or ID=\"" + str(item) + "\""
+        statement = "select country, zipcode, city, street, streetnumber, gpsl, gpsw, time from locations where " + whereString
+        connectionCursor.execute(statement)
+        resultAllLocations = connectionCursor.fetchall()
+else:
+        # get all the locations from database
+        statement = "select country, zipcode, city, street, streetnumber, gpsl, gpsw, time from locations"
+        connectionCursor.execute(statement)
+        resultAllLocations = connectionCursor.fetchall()
 
 details = []
 count = 0
