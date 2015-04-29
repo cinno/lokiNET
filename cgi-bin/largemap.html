@@ -138,19 +138,19 @@ print "line-height: 1.5;"
 print "}"
 print "</style>"
 print "</head>"
-print "<body id=\"bodyLogin\">"
+print "<body class=\"body\">"
 oneValueIsZero = 0
 allNeededLocations = myTool.dbSelect(connectionCursor, "select country, zipcode, city, street, streetnumber, ID from locations where gpsl = 0 or gpsw = 0")
 if len(allNeededLocations) != 0:
         print "<div id=\"dialog-confirm\" title=\"GPS error!\">"
-        print "<p><span class=\"ui-icon ui-icon-alert\" style=\"float:left; margin:0 7px 20px 0;\"></span><div id=\"fontDiv\">There are locations where the address was not translated into GPS coordinates.</div></p>"
+        print "<p><span class=\"ui-icon ui-icon-alert\" style=\"float:left; margin:0 7px 20px 0;\"></span><div class=\"fontDiv\">There are locations where the address was not translated into GPS coordinates.</div></p>"
         print "</div>"
-print "<table border=\"0\" id=\"creationTable\" style=\"left: 20%;	top: 5%;\">"
+print "<table border=\"0\" class=\"myTable\" style=\"left: 20%;	top: 5%;\">"
 print "<tr><td height=\"20%\"><img src=\"../webfiles/logo.png\" width=\"50%\"></td></tr>"
 print "<tr>"
 print "<td>"
 print "<table border=\"0\" width=\"350px\" style=\"background: #d3d3d3; border-radius: 5px;\">"
-print "<tr><form method=\"get\"><td><input style=\"display: block;\" name=\"search\" class=\"input\" value=\"" + search + "\" id=\"search\" placeholder=\"search\"></td><td><input style=\"display: block; width: 100px;\" id=\"refButton\" type=\"submit\" value=\"search\"></td></form></tr>"
+print "<tr><form method=\"get\"><td><input style=\"display: block;\" name=\"search\" class=\"input\" value=\"" + search + "\" id=\"search\" placeholder=\"search\"></td><td><input style=\"display: block; width: 100px;\" class=\"refButton\" type=\"submit\" value=\"search\"></td></form></tr>"
 print "<tr><td colspan=\"2\">"
 
 # include map header
@@ -227,7 +227,7 @@ print "}"
 print "</script>"
 
 print "</td></tr>"
-print "<tr><td width=\"20%\"><input style=\"display: block; width: 100%;\" id=\"loginButton\" onclick=\"window.location.href='menu.html'\" type=\"button\" value=\"back\"></td><td></td></tr>"
+print "<tr><td width=\"20%\"><input style=\"display: block; width: 100%;\" class=\"button\" onclick=\"window.location.href='menu.html'\" type=\"button\" value=\"back\"></td><td></td></tr>"
 print "</table>"
 print "</body>"
 print "</html>"

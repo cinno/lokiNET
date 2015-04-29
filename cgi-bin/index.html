@@ -79,8 +79,8 @@ print "$( \"#effect\" ).hide();";
 print "});";
 print "</script>"
 print "</head>"
-print "<body id=\"bodyLogin\">"
-print "<table border=\"0\" id=\"creationTable\">"
+print "<body class=\"body\">"
+print "<table border=\"0\" class=\"myTable\">"
 print "<tr><td height=\"20%\"><img src=\"../webfiles/logo.png\" width=\"50%\"></td></tr>"
 print "<tr>"
 print "<td>"
@@ -91,17 +91,17 @@ if saved == 1:
     print "<div id=\"effect\" class=\"ui-widget-content ui-corner-all\">Signature saved. (redirect in a few seconds...)</div>"
     print "<script>setTimeout(function(){window.location.href='menu.html';}, 5000);</script>"
 else:
-    print "<div align=\"center\" id=\"fontDiv\" style=\"color: #a3a3a3;\">Signature Configuration</div>"
+    print "<div align=\"center\" class=\"fontDiv\" style=\"color: #a3a3a3;\">Signature Configuration</div>"
 print "</td></tr>"
 
 print "<tr>"
 print "<form method=\"get\">"
-print "<td><input style=\"display: block;\" id=\"input\" title=\"The signature of your database file.\" type=\"text\" name=\"signature\" placeholder=\"signature\" size=\"30px\"></td>"
-print "<td><input style=\"display: block;\" id=\"loginButton\" type=\"submit\" value=\"save\"></td>"
+print "<td><input style=\"display: block;\" class=\"input\" title=\"The signature of your database file.\" type=\"text\" name=\"signature\" placeholder=\"signature\" size=\"30px\"></td>"
+print "<td><input style=\"display: block;\" class=\"button\" type=\"submit\" value=\"save\"></td>"
 if skip == 1:
-    print "<td><input style=\"display: block;\" onclick=\"window.location.href='menu.html'\" id=\"loginButton\" type=\"button\" value=\"skip\"></td>"
+    print "<td><input style=\"display: block;\" onclick=\"window.location.href='menu.html'\" class=\"button\" type=\"button\" value=\"skip\"></td>"
 else:
-    print "<td><input style=\"display: block; background: #cccccc\" id=\"loginButton\" type=\"button\" value=\"skip\" title=\"No signature saved or signatore save-process running. You are not allowed to skip this step.\" ></td>"
+    print "<td><input style=\"display: block; background: #cccccc\" class=\"button\" type=\"button\" value=\"skip\" title=\"No signature saved or signatore save-process running. You are not allowed to skip this step.\" ></td>"
 print "</form>"
 print "</tr>"
 print "</table>"

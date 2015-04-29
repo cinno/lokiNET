@@ -19,10 +19,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ########################################################################
 
-# get signature
-f = open('webfiles/config')
-dataFile = f.readlines()[0] + "Data.db"
-f.close() 
+from classes.tools import tools
+
+
+myTool = tools()
+dataFile = myTool.getSignature()
 
 # HTTP header
 print "Content-Type: text/html"
@@ -50,19 +51,19 @@ print ".ui-menu { width: 350px; background: #d3d3d3; border-radius: 5px;}"
 print ".ui-widget-header {padding: 0.2em; background: #a3a3a3}"
 print "</style>"
 print "</head>"
-print "<body id=\"bodyLogin\">"
-print "<table border=\"0\" id=\"creationTable\">"
+print "<body class=\"body\">"
+print "<table border=\"0\" class=\"myTable\">"
 print "<tr><td height=\"20%\"><img src=\"../webfiles/logo.png\" width=\"50%\"></td></tr>"
 print "<tr>"
 print "<td width=\"25%\" style=\"vertical-align: top;\">"
 print "<ul id=\"menu\">"
-print "<li class=\"ui-widget-header\"><div id=\"fontDiv\" style=\"font-size: 10px;\">Loaded Database: " + dataFile + "</div></li>"
-print "<li class=\"ui-widget-header\"><div id=\"fontDiv\">Database Content</div></li>"
-print "<li onclick=\"window.location.href='database.html'\" style=\"font-family:  Arial, sans-serif; font-size: 14px;\"><div id=\"fontDiv\">Tables</div></li>"
+print "<li class=\"ui-widget-header\"><div class=\"fontDiv\" style=\"font-size: 10px;\">Loaded Database: " + dataFile + "</div></li>"
+print "<li class=\"ui-widget-header\"><div class=\"fontDiv\">Database Content</div></li>"
+print "<li onclick=\"window.location.href='database.html'\" style=\"font-family:  Arial, sans-serif; font-size: 14px;\"><div class=\"fontDiv\">Tables</div></li>"
 print "<li style=\"font-family:  Arial, sans-serif; font-size: 14px;\" onclick=\"window.location.href='largemap.html'\">Large Map</li>"
-print "<li class=\"ui-widget-header\"><div id=\"fontDiv\">Configuration and more ...</div></li>"
-print "<li onclick=\"window.location.href='control.html'\"><div id=\"fontDiv\" title=\"Different database controls.\">Configuration</div></li>"
-print "<li class=\"ui-state-disabled\" onclick=\"window.location.href='statistics.html'\"><div id=\"fontDiv\">Statistics</div></li>"
+print "<li class=\"ui-widget-header\"><div class=\"fontDiv\">Configuration and more ...</div></li>"
+print "<li onclick=\"window.location.href='control.html'\"><div class=\"fontDiv\" title=\"Different database controls.\">Configuration</div></li>"
+print "<li class=\"ui-state-disabled\" onclick=\"window.location.href='statistics.html'\"><div class=\"fontDiv\">Statistics</div></li>"
 print "</li>"
 print "</ul>"
 print "</td>"

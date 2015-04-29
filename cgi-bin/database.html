@@ -21,17 +21,12 @@
 
 import sqlite3
 import datetime
+from classes.tools import tools
 
 
-# get signature
-f = open('webfiles/config')
-dataFile = f.readlines()[0] + "Data.db"
-f.close() 
-
-# connect to local database file
-connection = sqlite3.connect("data/" + dataFile)
-connectionCursor = connection.cursor()
-
+myTool = tools()
+dataFile = myTool.getSignature() 
+connectionCursor = myTool.connectToDatabase()
 
 # HTTP header
 print "Content-Type: text/html"
@@ -74,8 +69,8 @@ print "$('#cns').dataTable();"
 print "});"
 print "</script>"
 print "</head>"
-print "<body id=\"bodyLogin\">"
-print "<table border=\"0\" id=\"creationTable\" style=\"left: 20%; top: 5%; width: 60%\">"
+print "<body class=\"body\">"
+print "<table border=\"0\" class=\"myTable\" style=\"left: 20%; top: 5%; width: 60%\">"
 print "<tr><td height=\"20%\"><img src=\"../webfiles/logo.png\" width=\"50%\"></td></tr>"
 print "<tr>"
 print "<td>"
@@ -92,18 +87,14 @@ print "<div id=\"tabs-1\">"
 
 print "<div class=\"container\">"
 print "<table id=\"aps\" class=\"display\" cellspacing=\"0\">"
-print "<thead><tr><th><div id=\"fontDiv\">Scrambled BSSID</div></th><th><div id=\"fontDiv\">Scrambled ESSID</div></th><th><div id=\"fontDiv\">Channel</div></th><th><div id=\"fontDiv\">Power</div></th><th><div id=\"fontDiv\">Encryption</div></th><th><div id=\"fontDiv\">Time</div></th><th><div id=\"fontDiv\">Location</div></th></tr></thead>"
+print "<thead><tr><th><div class=\"fontDiv\">Scrambled BSSID</div></th><th><div class=\"fontDiv\">Scrambled ESSID</div></th><th><div class=\"fontDiv\">Channel</div></th><th><div class=\"fontDiv\">Power</div></th><th><div class=\"fontDiv\">Encryption</div></th><th><div class=\"fontDiv\">Time</div></th><th><div class=\"fontDiv\">Location</div></th></tr></thead>"
 print "<tbody>"
-statement = "select bssid, essid, channel, power, encryption, time, locationId from accesspoints"
-connectionCursor.execute(statement)
-allAccessPoints = connectionCursor.fetchall()
+allAccessPoints = myTool.dbSelect(connectionCursor, "select bssid, essid, channel, power, encryption, time, locationId from accesspoints")
 for i in range(0, len(allAccessPoints)):
     # get coordinates
-    statement = "select gpsl, gpsw from locations where ID=\"" + str(allAccessPoints[i][6]) + "\""
-    connectionCursor.execute(statement)
-    curLocation = connectionCursor.fetchall()    
+    curLocation = myTool.dbSelect(connectionCursor, "select gpsl, gpsw from locations where ID=\"" + str(allAccessPoints[i][6]) + "\"")   
     print "<tr>"
-    print "<td><div id=\"fontDiv\">" + str(allAccessPoints[i][0]) + "</div></td><td><div id=\"fontDiv\">"
+    print "<td><div class=\"fontDiv\">" + str(allAccessPoints[i][0]) + "</div></td><td><div class=\"fontDiv\">"
     # CRITICAL!!
     #
     try:
@@ -112,7 +103,7 @@ for i in range(0, len(allAccessPoints)):
         print "!!! ASCII ERROR !!!"
     #
     #
-    print "</div></td><td><div id=\"fontDiv\">" + str(allAccessPoints[i][2]) + "</div></td><td><div id=\"fontDiv\">" + str(allAccessPoints[i][3]) + "</div></td><td><div id=\"fontDiv\">" + str(allAccessPoints[i][4]) + "</div></td><td><div id=\"fontDiv\">" + str(datetime.datetime.fromtimestamp(float(allAccessPoints[i][5])).strftime("%Y-%m-%d %H:%M:%S")) + "</div></td><td><div id=\"fontDiv\">" + "<a href=\"http://maps.google.com/maps?q=" + curLocation[0][1] + "," + curLocation[0][0] + "\" data-geo=\"\" target=\"_blank\">" + curLocation[0][1] + "," + curLocation[0][0] + "</a></div></td>"       
+    print "</div></td><td><div class=\"fontDiv\">" + str(allAccessPoints[i][2]) + "</div></td><td><div class=\"fontDiv\">" + str(allAccessPoints[i][3]) + "</div></td><td><div class=\"fontDiv\">" + str(allAccessPoints[i][4]) + "</div></td><td><div class=\"fontDiv\">" + str(datetime.datetime.fromtimestamp(float(allAccessPoints[i][5])).strftime("%Y-%m-%d %H:%M:%S")) + "</div></td><td><div class=\"fontDiv\">" + "<a href=\"http://maps.google.com/maps?q=" + curLocation[0][1] + "," + curLocation[0][0] + "\" data-geo=\"\" target=\"_blank\">" + curLocation[0][1] + "," + curLocation[0][0] + "</a></div></td>"       
     print "</tr>"
 print "</tbody>"
 print "</table>"
@@ -122,18 +113,14 @@ print "</div>"
 print "<div id=\"tabs-2\">"
 print "<div class=\"container\">"
 print "<table id=\"cps\" class=\"display\" cellspacing=\"0\">"
-print "<thead><tr><th><div id=\"fontDiv\">Scrambled MAC</div></th><th><div id=\"fontDiv\">Scrambled Probe</div></th><th><div id=\"fontDiv\">Power</div></th><th><div id=\"fontDiv\">First Seen</div></th><th><div id=\"fontDiv\">Last Seen</div></th><th><div id=\"fontDiv\">Location</div></th></tr></thead>"
+print "<thead><tr><th><div class=\"fontDiv\">Scrambled MAC</div></th><th><div class=\"fontDiv\">Scrambled Probe</div></th><th><div class=\"fontDiv\">Power</div></th><th><div class=\"fontDiv\">First Seen</div></th><th><div class=\"fontDiv\">Last Seen</div></th><th><div class=\"fontDiv\">Location</div></th></tr></thead>"
 print "<tbody>"
-statement = "select clientMac, probe, power, timeFirst, timeLast, locationId from clientProbes"
-connectionCursor.execute(statement)
-allAccessPoints = connectionCursor.fetchall()
+allAccessPoints = myTool.dbSelect(connectionCursor, "select clientMac, probe, power, timeFirst, timeLast, locationId from clientProbes")
 for i in range(0, len(allAccessPoints)):
     # get coordinates
-    statement = "select gpsl, gpsw from locations where ID=\"" + str(allAccessPoints[i][5]) + "\""
-    connectionCursor.execute(statement)
-    curLocation = connectionCursor.fetchall()
+    curLocation = myTool.dbSelect(connectionCursor, "select gpsl, gpsw from locations where ID=\"" + str(allAccessPoints[i][5]) + "\"")
     print "<tr>"
-    print "<td><div id=\"fontDiv\">" + str(allAccessPoints[i][0]) + "</div></td><td><div id=\"fontDiv\">"
+    print "<td><div class=\"fontDiv\">" + str(allAccessPoints[i][0]) + "</div></td><td><div class=\"fontDiv\">"
     # CRITICAL!!
     #    
     try:    
@@ -142,7 +129,7 @@ for i in range(0, len(allAccessPoints)):
         print "!!! ASCII ERROR !!!"
     # CRITICAL!!
     #
-    print "</div></td><td><div id=\"fontDiv\">" + str(allAccessPoints[i][2]) + "</div></td><td><div id=\"fontDiv\">" + str(datetime.datetime.fromtimestamp(float(allAccessPoints[i][3])).strftime("%Y-%m-%d %H:%M:%S")) + "</div></td><td><div id=\"fontDiv\">" + str(datetime.datetime.fromtimestamp(float(allAccessPoints[i][4])).strftime("%Y-%m-%d %H:%M:%S")) + "</div></td><td><div id=\"fontDiv\">" + "<a href=\"http://maps.google.com/maps?q=" + curLocation[0][1] + "," + curLocation[0][0] + "\" data-geo=\"\" target=\"_blank\">" + curLocation[0][1] + "," + curLocation[0][0] + "</a></div></td>"
+    print "</div></td><td><div class=\"fontDiv\">" + str(allAccessPoints[i][2]) + "</div></td><td><div class=\"fontDiv\">" + str(datetime.datetime.fromtimestamp(float(allAccessPoints[i][3])).strftime("%Y-%m-%d %H:%M:%S")) + "</div></td><td><div class=\"fontDiv\">" + str(datetime.datetime.fromtimestamp(float(allAccessPoints[i][4])).strftime("%Y-%m-%d %H:%M:%S")) + "</div></td><td><div class=\"fontDiv\">" + "<a href=\"http://maps.google.com/maps?q=" + curLocation[0][1] + "," + curLocation[0][0] + "\" data-geo=\"\" target=\"_blank\">" + curLocation[0][1] + "," + curLocation[0][0] + "</a></div></td>"
     print "</tr>"
 print "</tbody>"
 print "</table>"
@@ -152,18 +139,14 @@ print "</div>"
 print "<div id=\"tabs-3\">"
 print "<div class=\"container\">"
 print "<table id=\"cns\" class=\"display\" cellspacing=\"0\">"
-print "<thead><tr><th><div id=\"fontDiv\">Scrambled MAC One</div></th><th><div id=\"fontDiv\">Scrambled MAC Two</div></th><th><div id=\"fontDiv\">Power</div></th><th><div id=\"fontDiv\">First Seen</div></th><th><div id=\"fontDiv\">Last Seen</div></th><th><div id=\"fontDiv\">Location</div></th></tr></thead>"
+print "<thead><tr><th><div class=\"fontDiv\">Scrambled MAC One</div></th><th><div class=\"fontDiv\">Scrambled MAC Two</div></th><th><div class=\"fontDiv\">Power</div></th><th><div class=\"fontDiv\">First Seen</div></th><th><div class=\"fontDiv\">Last Seen</div></th><th><div class=\"fontDiv\">Location</div></th></tr></thead>"
 print "<tbody>"
-statement = "select macOne, macTwo, power, timeFirst, timeLast, locationId from connections"
-connectionCursor.execute(statement)
-allAccessPoints = connectionCursor.fetchall()
+allAccessPoints = myTool.dbSelect(connectionCursor, "select macOne, macTwo, power, timeFirst, timeLast, locationId from connections")
 for i in range(0, len(allAccessPoints)):
     # get coordinates
-    statement = "select gpsl, gpsw from locations where ID=\"" + str(allAccessPoints[i][5]) + "\""
-    connectionCursor.execute(statement)
-    curLocation = connectionCursor.fetchall()
+    curLocation = myTool.dbSelect(connectionCursor, "select gpsl, gpsw from locations where ID=\"" + str(allAccessPoints[i][5]) + "\"")
     print "<tr>"
-    print "<td><div id=\"fontDiv\">" + str(allAccessPoints[i][0]) + "</div></td><td><div id=\"fontDiv\">" + str(allAccessPoints[i][1]) + "</div></td><td><div id=\"fontDiv\">" + str(allAccessPoints[i][2]) + "</div></td><td><div id=\"fontDiv\">" + str(datetime.datetime.fromtimestamp(float(allAccessPoints[i][3])).strftime("%Y-%m-%d %H:%M:%S")) + "</div></td><td><div id=\"fontDiv\">" + str(datetime.datetime.fromtimestamp(float(allAccessPoints[i][4])).strftime("%Y-%m-%d %H:%M:%S")) + "</div></td><td><div id=\"fontDiv\">" + "<a href=\"http://maps.google.com/maps?q=" + curLocation[0][1] + "," + curLocation[0][0] + "\" data-geo=\"\" target=\"_blank\">" + curLocation[0][1] + "," + curLocation[0][0] + "</a></div></td>"
+    print "<td><div class=\"fontDiv\">" + str(allAccessPoints[i][0]) + "</div></td><td><div class=\"fontDiv\">" + str(allAccessPoints[i][1]) + "</div></td><td><div class=\"fontDiv\">" + str(allAccessPoints[i][2]) + "</div></td><td><div class=\"fontDiv\">" + str(datetime.datetime.fromtimestamp(float(allAccessPoints[i][3])).strftime("%Y-%m-%d %H:%M:%S")) + "</div></td><td><div class=\"fontDiv\">" + str(datetime.datetime.fromtimestamp(float(allAccessPoints[i][4])).strftime("%Y-%m-%d %H:%M:%S")) + "</div></td><td><div class=\"fontDiv\">" + "<a href=\"http://maps.google.com/maps?q=" + curLocation[0][1] + "," + curLocation[0][0] + "\" data-geo=\"\" target=\"_blank\">" + curLocation[0][1] + "," + curLocation[0][0] + "</a></div></td>"
     print "</tr>"
 print "</tbody>"
 print "</table>"
@@ -172,7 +155,7 @@ print "</div>"
 print "</div>"
 
 print "</td></tr>"
-print "<tr><td width=\"20%\"><input style=\"display: block; width: 100%;\" id=\"loginButton\" onclick=\"window.location.href='menu.html'\" type=\"button\" value=\"back\"></td><td></td></tr>"
+print "<tr><td width=\"20%\"><input style=\"display: block; width: 100%;\" class=\"button\" onclick=\"window.location.href='menu.html'\" type=\"button\" value=\"back\"></td><td></td></tr>"
 print "</table>"
 print "</body>"
 print "</html>"

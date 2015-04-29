@@ -31,25 +31,17 @@ try:
 except:
 	operation = ""
 
-# get signature
-f = open('webfiles/config')
-dataFile = f.readlines()[0] + "Data.db"
-f.close() 
-
-# connect to local database file
-connection = sqlite3.connect("data/" + dataFile)
-connectionCursor = connection.cursor()
+myTool = tools()
+dataFile = myTool.getSignature() 
+connectionCursor = myTool.connectToDatabase()
 
 if operation == 1:
 	# select all entries where no GPS data is stored
-	statement = "select country, zipcode, city, street, streetnumber, ID from locations where gpsl = 0 or gpsw = 0"
-	connectionCursor.execute(statement)
-	allNeededLocations = connectionCursor.fetchall()
+	allNeededLocations = myTool.dbSelect(connectionCursor, "select country, zipcode, city, street, streetnumber, ID from locations where gpsl = 0 or gpsw = 0")
 	for row in allNeededLocations:
 		urlString = "http://maps.googleapis.com/maps/api/geocode/xml?address=" + urllib2.quote(row[4]) + ",+" + urllib2.quote(row[3]) + ",+" + urllib2.quote(row[1]) + ",+" + urllib2.quote(row[2]) + ",+" + urllib2.quote(row[0]) + "&sensor=false"
 
 		# extract GPS coordinates
-		myTool = tools()
 		res = myTool.streetToGps(urlString)
 
 		# save coordinates to database
@@ -91,8 +83,8 @@ print "$( \"#effect\" ).hide();";
 print "});";
 print "</script>"
 print "</head>"
-print "<body id=\"bodyLogin\">"
-print "<table border=\"0\" id=\"creationTable\">"
+print "<body class=\"body\">"
+print "<table border=\"0\" class=\"myTable\">"
 print "<tr><td height=\"20%\"><img src=\"../webfiles/logo.png\" width=\"50%\"></td></tr>"
 print "<tr>"
 print "<td>"
@@ -102,12 +94,12 @@ if operation == 1:
 	print "<div id=\"effect\" class=\"ui-widget-content ui-corner-all\">GPS coordinates resolved.</div>"
 	print "<script>setTimeout(function(){window.location.href='control.html';}, 5000);</script>"
 else:
-	print "<div align=\"center\" id=\"fontDiv\" style=\"color: #a3a3a3;\">Database: " + dataFile + "</div></td>"
+	print "<div align=\"center\" class=\"fontDiv\" style=\"color: #a3a3a3;\">Database: " + dataFile + "</div></td>"
 print "</tr>"
-print "<tr><td><input style=\"display: block; width: 100%;\" id=\"refButton\" onclick=\"window.location.href='control.html?operation=1'\" type=\"button\" value=\"convert address to GPS (all database entries)\"></td></tr>"
-print "<tr><td><input style=\"display: block; width: 100%;\" id=\"refButton\" onclick=\"window.location.href='index.html'\" type=\"button\" value=\"set signature\"></td></tr>"
+print "<tr><td><input style=\"display: block; width: 100%;\" class=\"refButton\" onclick=\"window.location.href='control.html?operation=1'\" type=\"button\" value=\"convert address to GPS (all database entries)\"></td></tr>"
+print "<tr><td><input style=\"display: block; width: 100%;\" class=\"refButton\" onclick=\"window.location.href='index.html'\" type=\"button\" value=\"set signature\"></td></tr>"
 print "<tr><td><div></div></td></tr>"
-print "<tr><td><input style=\"display: block; width: 100%;\" id=\"loginButton\" onclick=\"window.location.href='menu.html'\" type=\"button\" value=\"back\"></td></tr>"
+print "<tr><td><input style=\"display: block; width: 100%;\" class=\"button\" onclick=\"window.location.href='menu.html'\" type=\"button\" value=\"back\"></td></tr>"
 print "</td>"
 print "</tr>"
 print "</table>"

@@ -40,14 +40,16 @@ class tools:
 		return result
 
 	def connectToDatabase(self):
-		# get signature
-		f = open('webfiles/config')
-		dataFile = f.readlines()[0] + "Data.db"
-		f.close() 
-		# connect to local database file
+		dataFile = self.getSignature()
 		connection = sqlite3.connect("data/" + dataFile)
 		return connection.cursor()
 	
 	def dbSelect(self, connectionCursor, statement):
 		connectionCursor.execute(statement)
 		return connectionCursor.fetchall()	
+
+	def getSignature(self):
+		f = open('webfiles/config')
+		dataFile = f.readlines()[0] + "Data.db"
+		f.close()
+		return dataFile
