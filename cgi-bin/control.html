@@ -47,7 +47,7 @@ if operation == 1:
 		# save coordinates to database
 		statement = "update locations set gpsl=\"" + res[1] + "\", gpsw=\"" + res[0] + "\" where ID=\"" + str(row[5]) + "\"" 
 		connectionCursor.execute(statement)
-		connection.commit()
+		myTool.connection.commit()
 
 # HTTP header
 print "Content-Type: text/html"

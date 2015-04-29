@@ -25,6 +25,8 @@ from xml.dom.minidom import parseString
 
 
 class tools:
+	connection = ""
+	
 	def streetToGps(self, urlString):
 		url = urllib2.urlopen(urlString)
 		data = url.read()
@@ -41,8 +43,8 @@ class tools:
 
 	def connectToDatabase(self):
 		dataFile = self.getSignature()
-		connection = sqlite3.connect("data/" + dataFile)
-		return connection.cursor()
+		self.connection = sqlite3.connect("data/" + dataFile)
+		return self.connection.cursor()
 	
 	def dbSelect(self, connectionCursor, statement):
 		connectionCursor.execute(statement)
