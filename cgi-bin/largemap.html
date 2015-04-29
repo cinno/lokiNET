@@ -20,8 +20,8 @@
 ########################################################################
 
 import datetime
-import sqlite3
 import cgi
+from classes.tools import tools
 
 
 arguments = cgi.FieldStorage()
@@ -30,38 +30,16 @@ try:
 except:
         search = ""
 
-# get signature
-f = open('webfiles/config')
-dataFile = f.readlines()[0] + "Data.db"
-f.close() 
+myTool = tools()
+connectionCursor = myTool.connectToDatabase()
 
-# connect to local database file
-connection = sqlite3.connect("data/" + dataFile)
-connectionCursor = connection.cursor()
-
-statement = "select distinct bssid from accesspoints"
-connectionCursor.execute(statement)
-allMacsAPs = connectionCursor.fetchall()
-
-statement = "select distinct essid from accesspoints"
-connectionCursor.execute(statement)
-allEssidsAPs = connectionCursor.fetchall()
-
-statement = "select distinct clientMac from clientProbes"
-connectionCursor.execute(statement)
-allMacsCPs = connectionCursor.fetchall()
-
-statement = "select distinct probe from clientProbes"
-connectionCursor.execute(statement)
-allProbes = connectionCursor.fetchall()
-
+allMacsAPs = myTool.dbSelect(connectionCursor, "select distinct bssid from accesspoints")
+allEssidsAPs = myTool.dbSelect(connectionCursor, "select distinct essid from accesspoints")
+allMacsCPs = myTool.dbSelect(connectionCursor, "select distinct clientMac from clientProbes")
+allProbes = myTool.dbSelect(connectionCursor, "select distinct probe from clientProbes")
 connectionMACs = set()
-statement = "select distinct macOne from connections"
-connectionCursor.execute(statement)
-macConnectionOne = connectionCursor.fetchall()
-statement = "select distinct macTwo from connections"
-connectionCursor.execute(statement)
-macConnectionTwo = connectionCursor.fetchall()
+macConnectionOne = myTool.dbSelect(connectionCursor, "select distinct macOne from connections")
+macConnectionTwo = myTool.dbSelect(connectionCursor, "select distinct macTwo from connections")
 for row in macConnectionOne:
         connectionMACs.add(row[0])
 for row in macConnectionTwo:
@@ -162,9 +140,7 @@ print "</style>"
 print "</head>"
 print "<body id=\"bodyLogin\">"
 oneValueIsZero = 0
-statement = "select country, zipcode, city, street, streetnumber, ID from locations where gpsl = 0 or gpsw = 0"
-connectionCursor.execute(statement)
-allNeededLocations = connectionCursor.fetchall()
+allNeededLocations = myTool.dbSelect(connectionCursor, "select country, zipcode, city, street, streetnumber, ID from locations where gpsl = 0 or gpsw = 0")
 if len(allNeededLocations) != 0:
         print "<div id=\"dialog-confirm\" title=\"GPS error!\">"
         print "<p><span class=\"ui-icon ui-icon-alert\" style=\"float:left; margin:0 7px 20px 0;\"></span><div id=\"fontDiv\">There are locations where the address was not translated into GPS coordinates.</div></p>"
@@ -183,19 +159,13 @@ print "<div id=\"map\" style=\"width: 1024px; height: 550px;\"></div>"
 
 if search != "":
         locationSet = set()
-        statement = "select locationId from accesspoints where bssid=\"" + search + "\" or essid=\"" + search + "\""
-        connectionCursor.execute(statement)
-        locations = connectionCursor.fetchall()
+        locations = myTool.dbSelect(connectionCursor, "select locationId from accesspoints where bssid=\"" + search + "\" or essid=\"" + search + "\"")
         for i in locations:
                 locationSet.add(i[0])
-        statement = "select locationID from connections where macOne=\"" + search + "\" or macTwo=\"" + search + "\""
-        connectionCursor.execute(statement)
-        locations = connectionCursor.fetchall()
+        locations = myTool.dbSelect(connectionCursor, "select locationID from connections where macOne=\"" + search + "\" or macTwo=\"" + search + "\"")
         for i in locations:
                 locationSet.add(i[0])
-        statement = "select locationId from clientProbes where clientMac=\"" + search + "\" or probe=\"" + search + "\""
-        connectionCursor.execute(statement)
-        locations = connectionCursor.fetchall()
+        locations = myTool.dbSelect(connectionCursor, "select locationId from clientProbes where clientMac=\"" + search + "\" or probe=\"" + search + "\"")
         for i in locations:
                 locationSet.add(i[0])
         # build where clause
@@ -205,28 +175,18 @@ if search != "":
                         whereString += "ID=\"" + str(item) + "\""
                 else:
                         whereString += " or ID=\"" + str(item) + "\""
-        statement = "select country, zipcode, city, street, streetnumber, gpsl, gpsw, time from locations where " + whereString
-        connectionCursor.execute(statement)
-        resultAllLocations = connectionCursor.fetchall()
+        resultAllLocations = myTool.dbSelect(connectionCursor, "select country, zipcode, city, street, streetnumber, gpsl, gpsw, time from locations where " + whereString)
 else:
         # get all the locations from database
-        statement = "select country, zipcode, city, street, streetnumber, gpsl, gpsw, time from locations"
-        connectionCursor.execute(statement)
-        resultAllLocations = connectionCursor.fetchall()
+        resultAllLocations = myTool.dbSelect(connectionCursor, "select country, zipcode, city, street, streetnumber, gpsl, gpsw, time from locations")
 
 details = []
 count = 0
 # get location details
 for loc in range(1, len(resultAllLocations) + 1):
-        statement = "select ID from accesspoints where locationID=\"" + str(loc) + "\""
-        connectionCursor.execute(statement)        
-        numAPs = connectionCursor.fetchall()
-        statement = "select ID from clientProbes where locationID=\"" + str(loc) + "\""
-        connectionCursor.execute(statement)        
-        numProbes = connectionCursor.fetchall()        
-        statement = "select ID from connections where locationID=\"" + str(loc) + "\""
-        connectionCursor.execute(statement)        
-        numConnections = connectionCursor.fetchall()        
+        numAPs = myTool.dbSelect(connectionCursor, "select ID from accesspoints where locationID=\"" + str(loc) + "\"")
+        numProbes = myTool.dbSelect(connectionCursor, "select ID from clientProbes where locationID=\"" + str(loc) + "\"")        
+        numConnections = myTool.dbSelect(connectionCursor, "select ID from connections where locationID=\"" + str(loc) + "\"")   
         details.insert(count, "<p>Access Points: " + str(len(numAPs)) + "<br>Probes: " + str(len(numProbes)) + "<br>Connections: " + str(len(numConnections)))
         count += 1
         

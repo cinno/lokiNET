@@ -20,6 +20,7 @@
 ########################################################################
 
 import urllib2
+import sqlite3
 from xml.dom.minidom import parseString
 
 
@@ -37,3 +38,16 @@ class tools:
 		lng = lng.replace("</lng>", "")
 		result = [lat, lng]
 		return result
+
+	def connectToDatabase(self):
+		# get signature
+		f = open('webfiles/config')
+		dataFile = f.readlines()[0] + "Data.db"
+		f.close() 
+		# connect to local database file
+		connection = sqlite3.connect("data/" + dataFile)
+		return connection.cursor()
+	
+	def dbSelect(self, connectionCursor, statement):
+		connectionCursor.execute(statement)
+		return connectionCursor.fetchall()	
