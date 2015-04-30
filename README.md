@@ -1,5 +1,5 @@
 <h1>lokiNET</h1>
-<i>Version 1.0</i>
+<i>Version 1.5.13 - Release: Dagger</i>
 <hr>
 <h2>About:</h2>
 Location-based service which observes and stores all the different wireless devices and their properties around. Should be used at different locations simultaneously to be effective<br>
@@ -30,9 +30,13 @@ An attacker may create some small linux devices where this software is installed
 <h2>Usage Examples:</h2>
 <ul>
 <li>HINT: You always have to use your wifi card in monitor mode! (use airmon-ng or the built in -m option of this tool)</li>
-<li>Start the scanengine in offlinemode and using the address format: ./run [wireless_interface]</li>
+<li>Start the scanengine in offline mode and using the address format: ./run [wireless_interface]</li>
+<li>Start the scanengine in offline mode and using the address format while privacy protection is activated: ./run [wireless_interface] -p</li>
 <li>Start the webinterface: ./run.py -web</li>
 </ul>
+<hr>
+<h2>Privacy Mode</h2>
+<p>The privacy option takes care that every sniffed MAC address, ESSID and probe gets scrambled before it gets stored inside the database. The user input "signature" works as encryption key in the scrambling process. You can activate privacy by using the -p/--privacy option.</p>
 <hr>
 <h2>License:</h2>
 <p>Copyright 2015 Daniel Haake</p>
