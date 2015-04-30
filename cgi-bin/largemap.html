@@ -85,25 +85,13 @@ print "var data = ["
 for row in allMacsAPs:
         print "{ label: \"" + str(row[0]) + "\", category: \"BSSID\" },"
 for row in allEssidsAPs:
-        try:
-                print "{ label: \"" + str(row[0]) + "\", category: \"ESSID\" },"
-        except:
-                # CRITICAL!!!!
-                #
-                print "{ label: \"!!! ASCII ERROR !!! \", category: \"ESSID\" },"
-                #
+        print "{ label: \"" + u''.join((row[0])).encode('utf-8') + "\", category: \"ESSID\" },"
 for row in allMacsCPs:
         print "{ label: \"" + str(row[0]) + "\", category: \"client MAC\" },"
 for row in connectionMACs:
         print "{ label: \"" + str(row) + "\", category: \"connection MAC\" },"
 for row in allProbes:
-        try:
-                print "{ label: \"" + str(row[0]) + "\", category: \"client probes\" },"
-        except:
-                # CRITICAL!!!!
-                #
-                print "{ label: \"!!! ASCII ERROR !!! \", category: \"client probes\" },"
-                #
+        print "{ label: \"" + u''.join((row[0])).encode('utf-8') + "\", category: \"client probes\" },"
 print "];"
 print "$( \"#search\" ).catcomplete({"
 print "delay: 0,"
