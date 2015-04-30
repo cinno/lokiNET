@@ -22,7 +22,18 @@
 import sqlite3
 import datetime
 from classes.tools import tools
+import cgi
 
+
+arguments = cgi.FieldStorage()
+try:
+        detail = cgi.escape(arguments["detail"].value)
+except:
+        detail = ""
+try:
+        search = cgi.escape(arguments["search"].value)
+except:
+        search = ""
 
 myTool = tools()
 dataFile = myTool.getSignature() 
@@ -46,9 +57,10 @@ print "<script type=\"text/javascript\" language=\"javascript\" src=\"//cdn.data
 print "<script type=\"text/javascript\" language=\"javascript\" src=\"//cdn.datatables.net/plug-ins/1.10.6/integration/jqueryui/dataTables.jqueryui.js\"></script>"
 print "<script>"
 print "$(function() {"
+print "$( \"#dialog\" ).dialog();"
 print "$( document ).tooltip({"
 print "track: true,"
-print "items: \"[data-geo]\","
+print "items: \"[data-geo], [title]\","
 print "content: function() {"
 print "var element = $( this );"
 print "if ( element.is( \"[data-geo]\" ) ) {"
@@ -58,18 +70,36 @@ print "\"' src='http://maps.google.com/maps/api/staticmap?\" +"
 print "\"zoom=12&size=300x300&maptype=roadmap&sensor=false&center=\" +"
 print "text + \"&markers=size:mid%7Ccolor:red%7Clabel:1%7C\" + text + \"'>\";"
 print "}"
+print "if ( element.is( \"[title]\" ) ) {"
+print "return element.attr( \"title\" );"
+print "}"
 print "}"
 print "});"
 print "$( \"#tabs\" ).tabs()"
 print "});"
 print "$(document).ready(function() {"
-print "$('#aps').dataTable();"
-print "$('#cps').dataTable();"
-print "$('#cns').dataTable();"
+print "$('#aps').dataTable({"
+if search != "":
+    print "\"oSearch\": {\"sSearch\": \"" + search + "\"}"
+print "});"
+print "$('#cps').dataTable({"
+if search != "":
+    print "\"oSearch\": {\"sSearch\": \"" + search + "\"}"
+print "});"
+print "$('#cns').dataTable({"
+if search != "":
+    print "\"oSearch\": {\"sSearch\": \"" + search + "\"}"
+print "});"
 print "});"
 print "</script>"
 print "</head>"
 print "<body class=\"body\">"
+
+if detail != "":
+    print "<div id=\"dialog\" title=\"Copy Dialog\">"
+    print "<p>" + detail +"</p>"
+    print "</div>"
+
 print "<table border=\"0\" class=\"myTable\" style=\"left: 20%; top: 5%; width: 60%\">"
 print "<tr><td height=\"20%\"><img src=\"../webfiles/logo.png\" width=\"50%\"></td></tr>"
 print "<tr>"
@@ -89,21 +119,43 @@ print "<div class=\"container\">"
 print "<table id=\"aps\" class=\"display\" cellspacing=\"0\">"
 print "<thead><tr><th><div class=\"fontDiv\">Scrambled BSSID</div></th><th><div class=\"fontDiv\">Scrambled ESSID</div></th><th><div class=\"fontDiv\">Channel</div></th><th><div class=\"fontDiv\">Power</div></th><th><div class=\"fontDiv\">Encryption</div></th><th><div class=\"fontDiv\">Time</div></th><th><div class=\"fontDiv\">Location</div></th></tr></thead>"
 print "<tbody>"
+shortIdentifier = []
+shortIdentifierESSID = []
+shortIdentifierProbes = []
+shortIdentifierNumber = 0
+shortIdentifierNumberESSID = 0
+shortIdentifierNumberProbes = 0
 allAccessPoints = myTool.dbSelect(connectionCursor, "select bssid, essid, channel, power, encryption, time, locationId from accesspoints")
 for i in range(0, len(allAccessPoints)):
     # get coordinates
     curLocation = myTool.dbSelect(connectionCursor, "select gpsl, gpsw from locations where ID=\"" + str(allAccessPoints[i][6]) + "\"")   
     print "<tr>"
-    print "<td><div class=\"fontDiv\">" + str(allAccessPoints[i][0]) + "</div></td><td><div class=\"fontDiv\">"
-    # CRITICAL!!
-    #
-    try:
-        print str(allAccessPoints[i][1])
-    except:
-        print "!!! ASCII ERROR !!!"
-    #
-    #
-    print "</div></td><td><div class=\"fontDiv\">" + str(allAccessPoints[i][2]) + "</div></td><td><div class=\"fontDiv\">" + str(allAccessPoints[i][3]) + "</div></td><td><div class=\"fontDiv\">" + str(allAccessPoints[i][4]) + "</div></td><td><div class=\"fontDiv\">" + str(datetime.datetime.fromtimestamp(float(allAccessPoints[i][5])).strftime("%Y-%m-%d %H:%M:%S")) + "</div></td><td><div class=\"fontDiv\">" + "<a href=\"http://maps.google.com/maps?q=" + curLocation[0][1] + "," + curLocation[0][0] + "\" data-geo=\"\" target=\"_blank\">" + curLocation[0][1] + "," + curLocation[0][0] + "</a></div></td>"       
+    inList = 0
+    for item in shortIdentifier:
+        if item[0] == str(allAccessPoints[i][0]):
+            shortNum = item[1]
+            inList = 1
+    if inList == 0:
+        shortIdentifier.append([str(allAccessPoints[i][0]), shortIdentifierNumber])
+        print "<td><div onclick=\"window.location.href='database.html?detail=" + str(allAccessPoints[i][0]) + "&search=mac" + str(shortIdentifierNumber) + "'\" class=\"fontDiv\" title=\"" + str(allAccessPoints[i][0]) + "\">mac" + str(shortIdentifierNumber) + "</div></td>"
+        shortIdentifierNumber += 1
+    else:
+        print "<td><div onclick=\"window.location.href='database.html?detail=" + str(allAccessPoints[i][0]) + "&search=mac" + str(shortNum) + "'\" class=\"fontDiv\" title=\"" + str(allAccessPoints[i][0]) + "\">mac" + str(shortNum) + "</div></td>"
+    inList = 0
+    if u''.join((allAccessPoints[i][1])).encode('utf-8') != "[hidden]":
+        for item in shortIdentifierESSID:
+            if item[0] == u''.join((allAccessPoints[i][1])).encode('utf-8'):
+                shortNum = item[1]
+                inList = 1
+        if inList == 0:
+            shortIdentifierESSID.append([u''.join((allAccessPoints[i][1])).encode('utf-8'), shortIdentifierNumberESSID])
+            print "<td><div onclick=\"window.location.href='database.html?detail=" + u''.join((allAccessPoints[i][1])).encode('utf-8') + "&search=essid" + str(shortIdentifierNumberESSID) + "'\" class=\"fontDiv\" title=\"" + u''.join((allAccessPoints[i][1])).encode('utf-8') + "\">essid" + str(shortIdentifierNumberESSID) +  "</div></td>"
+            shortIdentifierNumberESSID += 1
+        else:
+            print "<td><div onclick=\"window.location.href='database.html?detail=" + u''.join((allAccessPoints[i][1])).encode('utf-8') + "&search=essid" + str(shortNum) + "'\" class=\"fontDiv\" title=\"" + u''.join((allAccessPoints[i][1])).encode('utf-8') + "\">essid" + str(shortNum) +  "</div></td>"
+    else:
+        print "<td><div onclick=\"window.location.href='database.html?search=[hidden]'\" class=\"fontDiv\">" + u''.join((allAccessPoints[i][1])).encode('utf-8') +  "</div></td>"
+    print "<td><div class=\"fontDiv\">" + str(allAccessPoints[i][2]) + "</div></td><td><div class=\"fontDiv\">" + str(allAccessPoints[i][3]) + "</div></td><td><div class=\"fontDiv\">" + str(allAccessPoints[i][4]) + "</div></td><td><div class=\"fontDiv\">" + str(datetime.datetime.fromtimestamp(float(allAccessPoints[i][5])).strftime("%Y-%m-%d %H:%M:%S")) + "</div></td><td><div class=\"fontDiv\">" + "<a href=\"http://maps.google.com/maps?q=" + curLocation[0][1] + "," + curLocation[0][0] + "\" data-geo=\"\" target=\"_blank\">" + curLocation[0][1] + "," + curLocation[0][0] + "</a></div></td>"       
     print "</tr>"
 print "</tbody>"
 print "</table>"
@@ -120,16 +172,32 @@ for i in range(0, len(allAccessPoints)):
     # get coordinates
     curLocation = myTool.dbSelect(connectionCursor, "select gpsl, gpsw from locations where ID=\"" + str(allAccessPoints[i][5]) + "\"")
     print "<tr>"
-    print "<td><div class=\"fontDiv\">" + str(allAccessPoints[i][0]) + "</div></td><td><div class=\"fontDiv\">"
-    # CRITICAL!!
-    #    
-    try:    
-        print str(allAccessPoints[i][1])
-    except:
-        print "!!! ASCII ERROR !!!"
-    # CRITICAL!!
-    #
-    print "</div></td><td><div class=\"fontDiv\">" + str(allAccessPoints[i][2]) + "</div></td><td><div class=\"fontDiv\">" + str(datetime.datetime.fromtimestamp(float(allAccessPoints[i][3])).strftime("%Y-%m-%d %H:%M:%S")) + "</div></td><td><div class=\"fontDiv\">" + str(datetime.datetime.fromtimestamp(float(allAccessPoints[i][4])).strftime("%Y-%m-%d %H:%M:%S")) + "</div></td><td><div class=\"fontDiv\">" + "<a href=\"http://maps.google.com/maps?q=" + curLocation[0][1] + "," + curLocation[0][0] + "\" data-geo=\"\" target=\"_blank\">" + curLocation[0][1] + "," + curLocation[0][0] + "</a></div></td>"
+    inList = 0
+    for item in shortIdentifier:
+        if item[0] == str(allAccessPoints[i][0]):
+            shortNum = item[1]
+            inList = 1
+    if inList == 0:
+        shortIdentifier.append([str(allAccessPoints[i][0]), shortIdentifierNumber])
+        print "<td><div onclick=\"window.location.href='database.html?detail=" + str(allAccessPoints[i][0]) + "&search=mac" + str(shortIdentifierNumber) + "'\"class=\"fontDiv\" title=\"" + str(allAccessPoints[i][0]) + "\">mac" + str(shortIdentifierNumber) + "</div></td>"        
+        shortIdentifierNumber += 1
+    else:
+        print "<td><div onclick=\"window.location.href='database.html?detail=" + str(allAccessPoints[i][0]) + "&search=mac" + str(shortNum) + "'\"class=\"fontDiv\" title=\"" + str(allAccessPoints[i][0]) + "\">mac" + str(shortNum) + "</div></td>"
+    inList = 0
+    if u''.join((allAccessPoints[i][1])).encode('utf-8') != "[broadcast]":
+        for item in shortIdentifierProbes:
+            if item[0] == u''.join((allAccessPoints[i][1])).encode('utf-8'):
+                shortNum = item[1]
+                inList = 1
+        if inList == 0:
+            shortIdentifierProbes.append([u''.join((allAccessPoints[i][1])).encode('utf-8'), shortIdentifierNumberProbes])
+            print "<td><div onclick=\"window.location.href='database.html?detail=" + u''.join((allAccessPoints[i][1])).encode('utf-8') + "&search=probe" + str(shortIdentifierNumberProbes) + "'\" class=\"fontDiv\" title=\"" + u''.join((allAccessPoints[i][1])).encode('utf-8') + "\">probe" + str(shortIdentifierNumberProbes) +  "</div></td>"
+            shortIdentifierNumberProbes += 1
+        else:
+            print "<td><div onclick=\"window.location.href='database.html?detail=" + u''.join((allAccessPoints[i][1])).encode('utf-8') + "&search=probe" + str(shortNum) + "'\" class=\"fontDiv\" title=\"" + u''.join((allAccessPoints[i][1])).encode('utf-8') + "\">probe" + str(shortNum) +  "</div></td>"
+    else:
+        print "<td><div onclick=\"window.location.href='database.html?search=[broadcast]'\" class=\"fontDiv\">" + u''.join((allAccessPoints[i][1])).encode('utf-8') +  "</div></td>"
+    print "<td><div class=\"fontDiv\">" + str(allAccessPoints[i][2]) + "</div></td><td><div class=\"fontDiv\">" + str(datetime.datetime.fromtimestamp(float(allAccessPoints[i][3])).strftime("%Y-%m-%d %H:%M:%S")) + "</div></td><td><div class=\"fontDiv\">" + str(datetime.datetime.fromtimestamp(float(allAccessPoints[i][4])).strftime("%Y-%m-%d %H:%M:%S")) + "</div></td><td><div class=\"fontDiv\">" + "<a href=\"http://maps.google.com/maps?q=" + curLocation[0][1] + "," + curLocation[0][0] + "\" data-geo=\"\" target=\"_blank\">" + curLocation[0][1] + "," + curLocation[0][0] + "</a></div></td>"
     print "</tr>"
 print "</tbody>"
 print "</table>"
@@ -146,7 +214,29 @@ for i in range(0, len(allAccessPoints)):
     # get coordinates
     curLocation = myTool.dbSelect(connectionCursor, "select gpsl, gpsw from locations where ID=\"" + str(allAccessPoints[i][5]) + "\"")
     print "<tr>"
-    print "<td><div class=\"fontDiv\">" + str(allAccessPoints[i][0]) + "</div></td><td><div class=\"fontDiv\">" + str(allAccessPoints[i][1]) + "</div></td><td><div class=\"fontDiv\">" + str(allAccessPoints[i][2]) + "</div></td><td><div class=\"fontDiv\">" + str(datetime.datetime.fromtimestamp(float(allAccessPoints[i][3])).strftime("%Y-%m-%d %H:%M:%S")) + "</div></td><td><div class=\"fontDiv\">" + str(datetime.datetime.fromtimestamp(float(allAccessPoints[i][4])).strftime("%Y-%m-%d %H:%M:%S")) + "</div></td><td><div class=\"fontDiv\">" + "<a href=\"http://maps.google.com/maps?q=" + curLocation[0][1] + "," + curLocation[0][0] + "\" data-geo=\"\" target=\"_blank\">" + curLocation[0][1] + "," + curLocation[0][0] + "</a></div></td>"
+    inList = 0
+    for item in shortIdentifier:
+        if item[0] == str(allAccessPoints[i][0]):
+            shortNum = item[1]
+            inList = 1
+    if inList == 0:
+        shortIdentifier.append([str(allAccessPoints[i][0]), shortIdentifierNumber])
+        print "<td><div onclick=\"window.location.href='database.html?detail=" + str(allAccessPoints[i][0]) + "&search=mac" + str(shortIdentifierNumber) + "'\"class=\"fontDiv\" title=\"" + str(allAccessPoints[i][0]) + "\">mac" + str(shortIdentifierNumber)
+        shortIdentifierNumber += 1
+    else:
+        print "<td><div onclick=\"window.location.href='database.html?detail=" + str(allAccessPoints[i][0]) + "&search=mac" + str(shortNum) + "'\"class=\"fontDiv\" title=\"" + str(allAccessPoints[i][0]) + "\">mac" + str(shortNum)
+    inList = 0
+    for item in shortIdentifier:
+        if item[0] == str(allAccessPoints[i][1]):
+            shortNum = item[1]
+            inList = 1
+    if inList == 0:
+        shortIdentifier.append([str(allAccessPoints[i][1]), shortIdentifierNumber])
+        print "<td><div onclick=\"window.location.href='database.html?detail=" + str(allAccessPoints[i][1]) + "&search=mac" + str(shortIdentifierNumber) + "'\"class=\"fontDiv\" title=\"" + str(allAccessPoints[i][1]) + "\">mac" + str(shortIdentifierNumber)
+        shortIdentifierNumber += 1
+    else:
+        print "<td><div onclick=\"window.location.href='database.html?detail=" + str(allAccessPoints[i][1]) + "&search=mac" + str(shortNum) + "'\"class=\"fontDiv\" title=\"" + str(allAccessPoints[i][1]) + "\">mac" + str(shortNum)
+    print "</div></td><td><div class=\"fontDiv\">" + str(allAccessPoints[i][2]) + "</div></td><td><div class=\"fontDiv\">" + str(datetime.datetime.fromtimestamp(float(allAccessPoints[i][3])).strftime("%Y-%m-%d %H:%M:%S")) + "</div></td><td><div class=\"fontDiv\">" + str(datetime.datetime.fromtimestamp(float(allAccessPoints[i][4])).strftime("%Y-%m-%d %H:%M:%S")) + "</div></td><td><div class=\"fontDiv\">" + "<a href=\"http://maps.google.com/maps?q=" + curLocation[0][1] + "," + curLocation[0][0] + "\" data-geo=\"\" target=\"_blank\">" + curLocation[0][1] + "," + curLocation[0][0] + "</a></div></td>"
     print "</tr>"
 print "</tbody>"
 print "</table>"

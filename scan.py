@@ -26,6 +26,8 @@ from scapy.all import *
 import sqlite3
 import time
 import datetime
+from itertools import cycle, izip
+import base64
 
  
 myTool = tools()
@@ -34,6 +36,7 @@ currentTimestamp = time.time()
 currentDateAndTime = datetime.datetime.fromtimestamp(currentTimestamp).strftime("%Y-%m-%d %H:%M:%S")
 interface = sys.argv[1]
 signature = sys.argv[2]
+privacy = int(sys.argv[4])
 dataFile = signature + "Data.db"
 locationID = int(sys.argv[3])
 ssids = set()
@@ -68,14 +71,22 @@ def pktHandler(pkt):
 		curPkt = pkt.getlayer(Dot11)
 		if curPkt.type == long(2L):
 			if curPkt.addr1 != "ff:ff:ff:ff:ff:ff" and curPkt.addr2 != "ff:ff:ff:ff:ff:ff" and curPkt.addr2 != "00:00:00:00:00:00" and curPkt.addr1 != "00:00:00:00:00:00":
-				comb1 = curPkt.addr1 + " " + curPkt.addr2
-				comb2 = curPkt.addr2 + " " + curPkt.addr1
+				address1 = curPkt.addr1
+				address2 = curPkt.addr2
+				
+				if privacy == 1:
+					address1 = base64.b64encode(''.join(chr(ord(c)^ord(k)) for c,k in izip(address1, cycle(signature))))
+					address2 = base64.b64encode(''.join(chr(ord(c)^ord(k)) for c,k in izip(address2, cycle(signature))))
+				
+				comb1 = address1 + " " + address2
+				comb2 = address2 + " " + address1
+	
 				# look if combination is already in database
 				combInDB = 0
-				combInDatabase = dbSelectCommit("select ID from connections where macOne=\"" + curPkt.addr1 + "\" and macTwo=\"" + curPkt.addr2 + "\"")	
+				combInDatabase = dbSelectCommit("select ID from connections where macOne=\"" + address1 + "\" and macTwo=\"" + address2 + "\"")	
 				if len(combInDatabase) != 0:
 					combInDB = 1
-				combInDatabase = dbSelectCommit("select ID from connections where macOne=\"" + curPkt.addr2 + "\" and macTwo=\"" + curPkt.addr1 + "\"")
+				combInDatabase = dbSelectCommit("select ID from connections where macOne=\"" + address2 + "\" and macTwo=\"" + address1 + "\"")
 				if len(combInDatabase) != 0:
 					combInDB = 1
 				if comb1 not in clientAPSet and comb2 not in clientAPSet and combInDB == 0:
@@ -85,25 +96,30 @@ def pktHandler(pkt):
 					# extract transmission power
 					power = extractTransmissionPower(pkt)
 	
-					print myTool.green + "[+] " + myTool.stop + str(currentDateAndTime) + ": Data exchange between " + curPkt.addr1 + " and " + curPkt.addr2 + " (" + str(int(len(clientAPSet)/2)) + "):"
+					print myTool.green + "[+] " + myTool.stop + str(currentDateAndTime) + ": Data exchange between " + address1 + " and " + address2 + " (" + str(int(len(clientAPSet)/2)) + "):"
 					print myTool.green + "[+] " + myTool.stop + "power --> " + power
 					print ""
 	
 					# save tupel data to database
-					dbChangeCommit("insert into connections (macOne, macTwo, power, locationId, timeFirst, timeLast) values (\"" + curPkt.addr1 + "\", \"" + curPkt.addr2 + "\", \"" + power + "\", \"" + str(locationID) + "\", \"" + str(currentTimestamp) + "\", \"" + str(currentTimestamp) +  "\")")
+					dbChangeCommit("insert into connections (macOne, macTwo, power, locationId, timeFirst, timeLast) values (\"" + address1 + "\", \"" + address2 + "\", \"" + power + "\", \"" + str(locationID) + "\", \"" + str(currentTimestamp) + "\", \"" + str(currentTimestamp) +  "\")")
 				else:
-					dbChangeCommit("UPDATE connections SET timeLast='" + str(currentTimestamp) + "' WHERE macOne='" + curPkt.addr1 + "' AND macTwo='" + curPkt.addr2 + "'")					
-					dbChangeCommit("UPDATE connections SET timeLast='" + str(currentTimestamp) + "' WHERE macOne='" + curPkt.addr2 + "' AND macTwo='" + curPkt.addr1 + "'")
+					dbChangeCommit("UPDATE connections SET timeLast='" + str(currentTimestamp) + "' WHERE macOne='" + address1 + "' AND macTwo='" + address2 + "'")					
+					dbChangeCommit("UPDATE connections SET timeLast='" + str(currentTimestamp) + "' WHERE macOne='" + address2 + "' AND macTwo='" + address1 + "'")
 
 	# scan for probe requests
 	if pkt.haslayer(Dot11ProbeReq):
-		curSSID = "[broadcast]"		
+		curSSID = "[broadcast]"
  		if len(pkt.getlayer(Dot11ProbeReq).info) > 0:
 			curSSID = pkt.getlayer(Dot11ProbeReq).info
-
-		newCombination = pkt.getlayer(Dot11).addr2 + " " + curSSID
+		clientMac = pkt.getlayer(Dot11).addr2
+		
+		if privacy == 1:
+			clientMac = base64.b64encode(''.join(chr(ord(c)^ord(k)) for c,k in izip(pkt.getlayer(Dot11).addr2, cycle(signature))))
+			if curSSID != "[broadcast]":
+				curSSID = base64.b64encode(''.join(chr(ord(c)^ord(k)) for c,k in izip(pkt.getlayer(Dot11).addr2, cycle(signature))))				
+		newCombination = clientMac + " " + curSSID
 		# look if combination is already in database
-		combInDatabase = dbSelectCommit("select ID from clientProbes where clientMac=\"" + pkt.getlayer(Dot11).addr2 + "\" and probe=\"" + curSSID + "\"")
+		combInDatabase = dbSelectCommit("select ID from clientProbes where clientMac=\"" + clientMac + "\" and probe=\"" + curSSID + "\"")
 		if newCombination not in clientProbes and len(combInDatabase) == 0:
 			clientProbes.add(newCombination)
 
@@ -111,16 +127,20 @@ def pktHandler(pkt):
 			power = extractTransmissionPower(pkt)
     
 			print myTool.green + "[+] " + myTool.stop + str(currentDateAndTime) + ": Discovered new unique probe request (" + str(len(clientProbes)) + "): "
-			print myTool.green + "[+] " + myTool.stop + "MAC --> " + pkt.getlayer(Dot11).addr2 
-			print myTool.green + "[+] " + myTool.stop + "probe --> " + curSSID
+			if privacy == 0:
+				print myTool.green + "[+] " + myTool.stop + "MAC --> " +  clientMac
+				print myTool.green + "[+] " + myTool.stop + "probe --> " + curSSID
+			else:
+				print myTool.green + "[+] " + myTool.stop + "scrambled MAC --> " +  clientMac
+				print myTool.green + "[+] " + myTool.stop + "probe --> " + curSSID
 			print myTool.green + "[+] " + myTool.stop + "power --> " + power
 			print ""
 
 			# save tupel to database
-			dbChangeCommit("insert into clientProbes (clientMac, probe, locationId, power, timeFirst, timeLast) values (\"" + pkt.getlayer(Dot11).addr2 + "\", \"" + curSSID + "\", \"" + str(locationID) + "\", \"" + power + "\", \"" + str(currentTimestamp) + "\", \"" + str(currentTimestamp) + "\")")
+			dbChangeCommit("insert into clientProbes (clientMac, probe, locationId, power, timeFirst, timeLast) values (\"" + clientMac + "\", \"" + curSSID + "\", \"" + str(locationID) + "\", \"" + power + "\", \"" + str(currentTimestamp) + "\", \"" + str(currentTimestamp) + "\")")
 		else:
 			# update last seen parameter
-			dbChangeCommit("UPDATE clientProbes SET timeLast='" + str(currentTimestamp) + "' WHERE clientMac='" + pkt.getlayer(Dot11).addr2 + "' AND probe='" + curSSID + "'")
+			dbChangeCommit("UPDATE clientProbes SET timeLast='" + str(currentTimestamp) + "' WHERE clientMac='" + clientMac + "' AND probe='" + curSSID + "'")
 
 	# scan for accesspoints
 	if pkt.haslayer(Dot11Beacon) or pkt.haslayer(Dot11ProbeResp):
@@ -139,8 +159,16 @@ def pktHandler(pkt):
 					channel = str(int(temp.info.encode("hex"), 16))
 								
 					print myTool.green + "[+] " + myTool.stop + str(currentDateAndTime) + ": Discovered Accesspoint (" + str(len(ssids)) + "):"
-					print myTool.green + "[+] " + myTool.stop + "BSSID --> " + pkt.getlayer(Dot11).addr3
-					print myTool.green + "[+] " + myTool.stop + "ESSID --> " + currSSID
+					if privacy == 0:
+						bssid = pkt.getlayer(Dot11).addr3
+						print myTool.green + "[+] " + myTool.stop + "BSSID --> " + bssid
+						print myTool.green + "[+] " + myTool.stop + "ESSID --> " + currSSID
+					else:
+						bssid = base64.b64encode(''.join(chr(ord(c)^ord(k)) for c,k in izip(pkt.getlayer(Dot11).addr3, cycle(signature))))
+						print myTool.green + "[+] " + myTool.stop + "scrambled BSSID --> " + bssid
+						if currSSID != "[hidden]":
+							currSSID = base64.b64encode(''.join(chr(ord(c)^ord(k)) for c,k in izip(currSSID, cycle(signature))))
+						print myTool.green + "[+] " + myTool.stop + "scrambled ESSID --> " + currSSID					
 					print myTool.green + "[+] " + myTool.stop + "channel --> " + channel
 					print myTool.green + "[+] " + myTool.stop + "power --> " + power
 			
@@ -152,7 +180,7 @@ def pktHandler(pkt):
 					print myTool.green + "[+] " + myTool.stop + "encryption --> " + encryption
 					print ""
 			
-					dbChangeCommit("insert into accesspoints (bssid, essid, channel, power, locationId, encryption, time) values (\"" + pkt.getlayer(Dot11).addr3 + "\", \"" + currSSID + "\", \"" + channel + "\", \"" + power + "\", \"" + str(locationID) + "\", \"" + encryption + "\", \"" + str(currentTimestamp) + "\")")
+					dbChangeCommit("insert into accesspoints (bssid, essid, channel, power, locationId, encryption, time) values (\"" + bssid + "\", \"" + currSSID + "\", \"" + channel + "\", \"" + power + "\", \"" + str(locationID) + "\", \"" + encryption + "\", \"" + str(currentTimestamp) + "\")")
 			
 					break
 							

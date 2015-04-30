@@ -35,6 +35,7 @@ offlineOrOnline = "offline"
 gpsOrStreet = "address"
 currentTimestamp = time.time()
 dataFile = "Data.db"
+privacy = 0
 
 
 def createDatabaseFile(sig):
@@ -62,18 +63,24 @@ else:
 
 	# help menu
         if "-h" in sys.argv or "--help" in sys.argv:
-                print usageString
-                print "scanengine:" + myTool.blue + "\t[-addr|--address]" + myTool.stop + "\t" + myTool.green + "[default] " + myTool.stop + "Use direct address input for location (excludes GPS input)"
-                print myTool.blue + "\t\t[-gps|--gps]" + myTool.stop + "\t\tUse direct GPS input for location (excludes address input)"
-                print myTool.blue + "\t\t[-off|--offline]" + myTool.stop + "\t" + myTool.green + "[default]" + myTool.stop + "Uses offline mode (excludes online mode)"
-                print myTool.blue + "\t\t[-on|--online]" + myTool.stop + "\t\tUse online mode (excludes offline mode)"
+		print usageString
+		print "scanengine:" + myTool.blue + "\t[-addr|--address]" + myTool.stop + "\t" + myTool.green + "[default] " + myTool.stop + "Use direct address input for location (excludes GPS input)"
+		print myTool.blue + "\t\t[-gps|--gps]" + myTool.stop + "\t\tUse direct GPS input for location (excludes address input)"
+		print myTool.blue + "\t\t[-off|--offline]" + myTool.stop + "\t" + myTool.green + "[default]" + myTool.stop + "Uses offline mode (excludes online mode)"
+		print myTool.blue + "\t\t[-on|--online]" + myTool.stop + "\t\tUse online mode (excludes offline mode)"
 
-                print "webinterface:" +  myTool.blue + "\t[-web|--webinterface]" + myTool.stop + "\tStart webserver to analyse collected data"
+		print "webinterface:" +  myTool.blue + "\t[-web|--webinterface]" + myTool.stop + "\tStart webserver to analyse collected data"
 
-                print "others:" + myTool.blue + "\t\t[-h|--help]" + myTool.stop + "\t\tPrints this help menu"
-                print myTool.blue + "\t\t[-m|--monitor]" + myTool.stop + "\t\tChange mode of selected interface to \"monitor\" "
-                print ""
-                sys.exit()
+		print "others:" + myTool.blue + "\t\t[-h|--help]" + myTool.stop + "\t\tPrints this help menu"
+		print myTool.blue + "\t\t[-m|--monitor]" + myTool.stop + "\t\tChange mode of selected interface to \"monitor\""
+		print myTool.blue + "\t\t[-p|--privacy]" + myTool.stop + "\t\tIf you set this parameter all collected personal data will be scrambled."                
+		print ""
+		sys.exit()
+
+	# enable privacy
+	if "-p" in sys.argv or "--privacy" in sys.argv:
+		privacy = 1
+		print myTool.green + "[+] " + myTool.stop + "Privacy activated."
 
 	# start monitor mode if desired
         if "-m" in sys.argv or "--monitor" in sys.argv:
@@ -165,7 +172,7 @@ else:
 		maxLocationId = connectionCursor.fetchall()[0][0]
 		
 		# execute scan script
-		os.system("./scan.py " + interface + " " + signature + " " + str(maxLocationId))
+		os.system("./scan.py " + interface + " " + signature + " " + str(maxLocationId) + " " + str(privacy))
 	else:
 		# direct GPS input
 		print myTool.green + "\n[+++] " + myTool.stop + "Scanengine Selected" + myTool.green + " [+++]" + myTool.stop
@@ -189,4 +196,4 @@ else:
 		maxLocationId = connectionCursor.fetchall()[0][0]
 		
 		# execute scan script
-		os.system("./scan.py " + interface + " " + signature + " " + str(maxLocationId))		
+		os.system("./scan.py " + interface + " " + signature + " " + str(maxLocationId) + " " + str(privacy))
