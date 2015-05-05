@@ -36,6 +36,8 @@ gpsOrStreet = "address"
 currentTimestamp = time.time()
 dataFile = "Data.db"
 privacy = 0
+silentArray = []
+silent = 0
 
 
 def createDatabaseFile(sig):
@@ -75,21 +77,36 @@ else:
 
 		print "others:" + myTool.blue + "\t\t[-h|--help]" + myTool.stop + "\t\tPrints this help menu"
 		print myTool.blue + "\t\t[-m|--monitor]" + myTool.stop + "\t\tChange mode of selected interface to \"monitor\""
-		print myTool.blue + "\t\t[-p|--privacy]" + myTool.stop + "\t\tIf you set this parameter all collected personal data will be scrambled."                
+		print myTool.blue + "\t\t[-p|--privacy]" + myTool.stop + "\t\tIf you set this parameter all collected personal data will be scrambled."
+		print myTool.blue + "\t\t[-s|--silent]" + myTool.stop + "\t\tEnable silent mode. In silent mode no console output will be generated.\n\t\t\t\t\tTo make sure the script works fine you need to put the silent flag at the end of the parameters followed by all needed input."		
 		print ""
 		sys.exit()
+
+	# silent mode configuration
+	if "-s" in sys.argv or "--silent" in sys.argv:
+		position = 0
+		c = 0
+		silent = 1
+		for element in sys.argv:
+			if element == "-s" or element == "--silent":
+				position = c
+			c += 1
+		for i in range(position + 1, len(sys.argv)):
+			silentArray.append(sys.argv[i])
 
 	# enable privacy
 	if "-p" in sys.argv or "--privacy" in sys.argv:
 		privacy = 1
-		print myTool.green + "[+] " + myTool.stop + "Privacy activated."
+		if silent == 0:
+			print myTool.green + "[+] " + myTool.stop + "Privacy activated."
 
 	# start monitor mode if desired
         if "-m" in sys.argv or "--monitor" in sys.argv:
                 os.system("ifconfig " + interface + " down")
                 os.system("iwconfig " + interface + " mode monitor")
                 os.system("ifconfig " + interface + " up")
-                print myTool.green + "[+] " + myTool.stop + "Monitor interface started."
+		if silent == 0:
+			print myTool.green + "[+] " + myTool.stop + "Monitor interface started."
 
 	# start the merge script
 	if "-me" in sys.argv or "--merge" in sys.argv:
@@ -128,7 +145,8 @@ else:
                 if "-on" in sys.argv or "--online" in sys.argv:
                         sys.exit(invalidString)
                 else:
-                        print myTool.green + "[+]" + myTool.stop + " Offline mode selected."
+			if silent == 0:
+				print myTool.green + "[+]" + myTool.stop + " Offline mode selected."
                         offlineOrOnline = "offline"
 
         # use online mode
@@ -137,7 +155,8 @@ else:
                 if "-off" in sys.argv or "--offline" in sys.argv:
                         sys.exit(invalidString)
                 else:
-                        print myTool.green + "[+]" + myTool.stop + " Online mode selected."
+			if silent == 0:
+				print myTool.green + "[+]" + myTool.stop + " Online mode selected."
                         offlineOrOnline = "online"
 
 	# direct gps input
@@ -146,7 +165,8 @@ else:
                 if "-addr" in sys.argv or "--address" in sys.argv:
                         sys.exit(invalidString)
                 else:
-                        print myTool.green + "[+]" + myTool.stop + " GPS mode selected."
+			if silent == 0:
+				print myTool.green + "[+]" + myTool.stop + " GPS mode selected."
                         gpsOrStreet = "gps"
 
         # address input (convert to to gps later)
@@ -155,20 +175,29 @@ else:
                 if "-gps" in sys.argv or "--gps" in sys.argv:
                         sys.exit(invalidString)
                 else:
-                        print myTool.green + "[+]" + myTool.stop + " Address mode selected."
+			if silent == 0:
+				print myTool.green + "[+]" + myTool.stop + " Address mode selected."
                         gpsOrStreet = "address"
 
 	# start session
 	if gpsOrStreet == "address":
-		print myTool.green + "\n[+++] " + myTool.stop + "Scanengine Selected" + myTool.green + " [+++]" + myTool.stop
-		print "[?] Type in your current location:"
-		country = raw_input("# Country: ")
-		zipcode = raw_input("# Zipcode: ")
-		city = raw_input("# City: ")
-		street = raw_input("# Street: ")
-		streetnumber = raw_input("# Streetnumber: ")
-		print "[?] Type in the session id:"
-		signature = raw_input("# Session value: ")
+		if len(silentArray) == 0:
+			print myTool.green + "\n[+++] " + myTool.stop + "Scanengine Selected" + myTool.green + " [+++]" + myTool.stop
+			print "[?] Type in your current location:"
+			country = raw_input("# Country: ")
+			zipcode = raw_input("# Zipcode: ")
+			city = raw_input("# City: ")
+			street = raw_input("# Street: ")
+			streetnumber = raw_input("# Streetnumber: ")
+			print "[?] Type in the session id:"
+			signature = raw_input("# Session value: ")
+		else:
+			country = silentArray[0]
+			zipcode = silentArray[1]
+			city = silentArray[2]
+			street = silentArray[3]
+			streetnumber = silentArray[4]
+			signature = silentArray[5]
 		
 		createDatabaseFile(signature)
 		
@@ -176,46 +205,72 @@ else:
 		connection = sqlite3.connect("data/" + signature + "Data.db")
 		connectionCursor = connection.cursor()
 
-		if offlineOrOnline == "offline":
-			statement = "insert into locations (country, zipcode, city, street, streetnumber, gpsl, gpsw, time) values (\"" + country + "\", \"" + zipcode + "\", \"" + city + "\", \"" + street + "\", \"" + streetnumber + "\", \"0\", \"0\", \"" + str(currentTimestamp) + "\")"
-		else:
-			# resolve gps coordinates from address
-			url = "http://maps.googleapis.com/maps/api/geocode/xml?address=" + urllib2.quote(country) + ",+" + urllib2.quote(zipcode) + ",+" + urllib2.quote(city) + ",+" + urllib2.quote(street) + ",+" + urllib2.quote(streetnumber) + "&sensor=false"
-			# extract GPS coordinates
-			res = myTool.streetToGps(url)
-			statement = "insert into locations (country, zipcode, city, street, streetnumber, gpsl, gpsw, time) values (\"" + country + "\", \"" + zipcode + "\", \"" + city + "\", \"" + street + "\", \"" + streetnumber + "\", \"" + res[1] + "\", \"" + res[0] + "\", \"" + str(currentTimestamp) + "\")"
-			print myTool.green + "[+] " + myTool.stop + "Resolving GPS coordinates... (needs internet connection!)"
+		# test if location is already in database
+		statement = "select ID from locations where country=\"" + country + "\" and zipcode=\"" + zipcode + "\" and city=\"" + city + "\" and street=\"" + street + "\" and streetnumber=\"" + streetnumber + "\""
+		connectionCursor.execute(statement)
+		inDB = connectionCursor.fetchall()		
+
+		if len(inDB) == 0:
+			if offlineOrOnline == "offline":
+				statement = "insert into locations (country, zipcode, city, street, streetnumber, gpsl, gpsw, time) values (\"" + country + "\", \"" + zipcode + "\", \"" + city + "\", \"" + street + "\", \"" + streetnumber + "\", \"0\", \"0\", \"" + str(currentTimestamp) + "\")"
+			else:
+				# resolve gps coordinates from address
+				url = "http://maps.googleapis.com/maps/api/geocode/xml?address=" + urllib2.quote(country) + ",+" + urllib2.quote(zipcode) + ",+" + urllib2.quote(city) + ",+" + urllib2.quote(street) + ",+" + urllib2.quote(streetnumber) + "&sensor=false"
+				# extract GPS coordinates
+				res = myTool.streetToGps(url)
+				statement = "insert into locations (country, zipcode, city, street, streetnumber, gpsl, gpsw, time) values (\"" + country + "\", \"" + zipcode + "\", \"" + city + "\", \"" + street + "\", \"" + streetnumber + "\", \"" + res[1] + "\", \"" + res[0] + "\", \"" + str(currentTimestamp) + "\")"
+				if len(silentArray) == 0:
+					print myTool.green + "[+] " + myTool.stop + "Resolving GPS coordinates... (needs internet connection!)"
 			
-		connectionCursor.execute(statement)
-		connection.commit()    		
+			connectionCursor.execute(statement)
+			connection.commit()    		
 		
-		statement = "SELECT ID FROM locations ORDER BY ID DESC LIMIT 1"
-		connectionCursor.execute(statement)
-		maxLocationId = connectionCursor.fetchall()[0][0]
+			statement = "SELECT ID FROM locations ORDER BY ID DESC LIMIT 1"
+			connectionCursor.execute(statement)
+			maxLocationId = connectionCursor.fetchall()[0][0]
+		else:
+			maxLocationId = inDB[0][0]
+			if len(silentArray) == 0:
+				print myTool.warning + "[!] " + myTool.stop + "Location already exists in database. Using saved entry instead of saving a new one."
 		
 		# execute scan script
-		os.system("./scan.py " + interface + " " + signature + " " + str(maxLocationId) + " " + str(privacy))
+		os.system("./scan.py " + interface + " " + signature + " " + str(maxLocationId) + " " + str(privacy) + " " + str(silent))
 	else:
 		# direct GPS input
-		print myTool.green + "\n[+++] " + myTool.stop + "Scanengine Selected" + myTool.green + " [+++]" + myTool.stop
-		print "[?] Type in your current location:"
-		gpsl = raw_input("# Longitude: ")
-		gpsw = raw_input("# Latitude: ")
-		print "[?] Type in the session id:"
-		signature = raw_input("# Session value: ")
+		if silent == 0:
+			print myTool.green + "\n[+++] " + myTool.stop + "Scanengine Selected" + myTool.green + " [+++]" + myTool.stop
+			print "[?] Type in your current location:"
+			gpsl = raw_input("# Longitude: ")
+			gpsw = raw_input("# Latitude: ")
+			print "[?] Type in the session id:"
+			signature = raw_input("# Session value: ")
+		else:
+			gpsl = silentArray[0]
+			gpsw = silentArray[1]
+			signature = silentArray[2]
 		
-		createDatabaseFile(signature)	
-		
-		# save new location to database
+		createDatabaseFile(signature)
 		connection = sqlite3.connect("data/" + signature + "Data.db")
-		connectionCursor = connection.cursor()
-		statement = "insert into locations (country, zipcode, city, street, streetnumber, gpsl, gpsw, time) values (\"No entry.\", \"No entry.\", \"No entry.\", \"No entry.\", \"No entry.\", \"" + gpsl + "\", \"" + gpsw + "\", \"" + str(currentTimestamp) + "\")"	
-		connectionCursor.execute(statement)
-		connection.commit()
+		connectionCursor = connection.cursor()		
 		
-		statement = "SELECT ID FROM locations ORDER BY ID DESC LIMIT 1"
+		# test if location is already in database
+		statement = "select ID from locations where gpsl=\"" + gpsl + "\" and gpsw=\"" + gpsw + "\""
 		connectionCursor.execute(statement)
-		maxLocationId = connectionCursor.fetchall()[0][0]
+		inDB = connectionCursor.fetchall()		
+		
+		if len(inDB) == 0:
+			# save new location to database
+			statement = "insert into locations (country, zipcode, city, street, streetnumber, gpsl, gpsw, time) values (\"No entry.\", \"No entry.\", \"No entry.\", \"No entry.\", \"No entry.\", \"" + gpsl + "\", \"" + gpsw + "\", \"" + str(currentTimestamp) + "\")"	
+			connectionCursor.execute(statement)
+			connection.commit()
+		
+			statement = "SELECT ID FROM locations ORDER BY ID DESC LIMIT 1"
+			connectionCursor.execute(statement)
+			maxLocationId = connectionCursor.fetchall()[0][0]
+		else:
+			maxLocationId = inDB[0][0]
+			if silent == 0:
+				print myTool.warning + "[!] " + myTool.stop + "Location already exists in database. Using saved entry instead of saving a new one."
 		
 		# execute scan script
-		os.system("./scan.py " + interface + " " + signature + " " + str(maxLocationId) + " " + str(privacy))
+		os.system("./scan.py " + interface + " " + signature + " " + str(maxLocationId) + " " + str(privacy) + " " + str(silent))

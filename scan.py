@@ -37,6 +37,7 @@ currentDateAndTime = datetime.datetime.fromtimestamp(currentTimestamp).strftime(
 interface = sys.argv[1]
 signature = sys.argv[2]
 privacy = int(sys.argv[4])
+silent = int(sys.argv[5])
 dataFile = signature + "Data.db"
 locationID = int(sys.argv[3])
 ssids = set()
@@ -60,7 +61,8 @@ def extractTransmissionPower(packet):
 		power = str(int(power[0][len(power)-5:len(power)-4:].encode("hex"), 16))
 	except:
 		power = "0"
-		print myTool.warning + "[!] " + myTool.stop + "Extracting transmission power failed..."
+		if silent == 0:
+			print myTool.warning + "[!] " + myTool.stop + "Extracting transmission power failed..."
 
         return power
 
@@ -95,10 +97,10 @@ def pktHandler(pkt):
 	
 					# extract transmission power
 					power = extractTransmissionPower(pkt)
-	
-					print myTool.green + "[+] " + myTool.stop + str(currentDateAndTime) + ": Data exchange between " + address1 + " and " + address2 + " (" + str(int(len(clientAPSet)/2)) + "):"
-					print myTool.green + "[+] " + myTool.stop + "power --> " + power
-					print ""
+					if silent == 0:
+						print myTool.green + "[+] " + myTool.stop + str(currentDateAndTime) + ": Data exchange between " + address1 + " and " + address2 + " (" + str(int(len(clientAPSet)/2)) + "):"
+						print myTool.green + "[+] " + myTool.stop + "power --> " + power
+						print ""
 	
 					# save tupel data to database
 					dbChangeCommit("insert into connections (macOne, macTwo, power, locationId, timeFirst, timeLast) values (\"" + address1 + "\", \"" + address2 + "\", \"" + power + "\", \"" + str(locationID) + "\", \"" + str(currentTimestamp) + "\", \"" + str(currentTimestamp) +  "\")")
@@ -126,15 +128,19 @@ def pktHandler(pkt):
 			# extract transmission power
 			power = extractTransmissionPower(pkt)
     
-			print myTool.green + "[+] " + myTool.stop + str(currentDateAndTime) + ": Discovered new unique probe request (" + str(len(clientProbes)) + "): "
+			if silent == 0:
+				print myTool.green + "[+] " + myTool.stop + str(currentDateAndTime) + ": Discovered new unique probe request (" + str(len(clientProbes)) + "): "
 			if privacy == 0:
-				print myTool.green + "[+] " + myTool.stop + "MAC --> " +  clientMac
-				print myTool.green + "[+] " + myTool.stop + "probe --> " + curSSID
+				if silent == 0:
+					print myTool.green + "[+] " + myTool.stop + "MAC --> " +  clientMac
+					print myTool.green + "[+] " + myTool.stop + "probe --> " + curSSID
 			else:
-				print myTool.green + "[+] " + myTool.stop + "scrambled MAC --> " +  clientMac
-				print myTool.green + "[+] " + myTool.stop + "probe --> " + curSSID
-			print myTool.green + "[+] " + myTool.stop + "power --> " + power
-			print ""
+				if silent == 0:
+					print myTool.green + "[+] " + myTool.stop + "scrambled MAC --> " +  clientMac
+					print myTool.green + "[+] " + myTool.stop + "probe --> " + curSSID
+			if silent == 0:
+				print myTool.green + "[+] " + myTool.stop + "power --> " + power
+				print ""
 
 			# save tupel to database
 			dbChangeCommit("insert into clientProbes (clientMac, probe, locationId, power, timeFirst, timeLast) values (\"" + clientMac + "\", \"" + curSSID + "\", \"" + str(locationID) + "\", \"" + power + "\", \"" + str(currentTimestamp) + "\", \"" + str(currentTimestamp) + "\")")
@@ -157,28 +163,34 @@ def pktHandler(pkt):
 					power = extractTransmissionPower(pkt)
 
 					channel = str(int(temp.info.encode("hex"), 16))
-								
-					print myTool.green + "[+] " + myTool.stop + str(currentDateAndTime) + ": Discovered Accesspoint (" + str(len(ssids)) + "):"
+					
+					if silent == 0:			
+						print myTool.green + "[+] " + myTool.stop + str(currentDateAndTime) + ": Discovered Accesspoint (" + str(len(ssids)) + "):"
 					if privacy == 0:
 						bssid = pkt.getlayer(Dot11).addr3
-						print myTool.green + "[+] " + myTool.stop + "BSSID --> " + bssid
-						print myTool.green + "[+] " + myTool.stop + "ESSID --> " + currSSID
+						if silent == 0:
+							print myTool.green + "[+] " + myTool.stop + "BSSID --> " + bssid
+							print myTool.green + "[+] " + myTool.stop + "ESSID --> " + currSSID
 					else:
 						bssid = base64.b64encode(''.join(chr(ord(c)^ord(k)) for c,k in izip(pkt.getlayer(Dot11).addr3, cycle(signature))))
-						print myTool.green + "[+] " + myTool.stop + "scrambled BSSID --> " + bssid
+						if silent == 0:
+							print myTool.green + "[+] " + myTool.stop + "scrambled BSSID --> " + bssid
 						if currSSID != "[hidden]":
 							currSSID = base64.b64encode(''.join(chr(ord(c)^ord(k)) for c,k in izip(currSSID, cycle(signature))))
-						print myTool.green + "[+] " + myTool.stop + "scrambled ESSID --> " + currSSID					
-					print myTool.green + "[+] " + myTool.stop + "channel --> " + channel
-					print myTool.green + "[+] " + myTool.stop + "power --> " + power
+						if silent == 0:
+							print myTool.green + "[+] " + myTool.stop + "scrambled ESSID --> " + currSSID					
+					if silent == 0:
+						print myTool.green + "[+] " + myTool.stop + "channel --> " + channel
+						print myTool.green + "[+] " + myTool.stop + "power --> " + power
 			
 					cap = pkt.sprintf("{Dot11Beacon:%Dot11Beacon.cap%}\{Dot11ProbeResp:%Dot11ProbeResp.cap%}")
 					if re.search("privacy", cap):
 						encryption = "Yes"
 					else:
 						encryption = "No"
-					print myTool.green + "[+] " + myTool.stop + "encryption --> " + encryption
-					print ""
+					if silent == 0:
+						print myTool.green + "[+] " + myTool.stop + "encryption --> " + encryption
+						print ""
 			
 					dbChangeCommit("insert into accesspoints (bssid, essid, channel, power, locationId, encryption, time) values (\"" + bssid + "\", \"" + currSSID + "\", \"" + channel + "\", \"" + power + "\", \"" + str(locationID) + "\", \"" + encryption + "\", \"" + str(currentTimestamp) + "\")")
 			
