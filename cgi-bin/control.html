@@ -22,6 +22,7 @@
 import cgi
 import sqlite3
 import urllib2
+import os
 from classes.tools import tools
 
 
@@ -48,6 +49,7 @@ if operation == 1:
 		statement = "update locations set gpsl=\"" + res[1] + "\", gpsw=\"" + res[0] + "\" where ID=\"" + str(row[5]) + "\"" 
 		connectionCursor.execute(statement)
 		myTool.connection.commit()
+
 
 # HTTP header
 print "Content-Type: text/html"
@@ -94,10 +96,43 @@ if operation == 1:
 	print "<div id=\"effect\" class=\"ui-widget-content ui-corner-all\">GPS coordinates resolved.</div>"
 	print "<script>setTimeout(function(){window.location.href='control.html';}, 5000);</script>"
 else:
-	print "<div align=\"center\" class=\"fontDiv\" style=\"color: #a3a3a3;\">Database: " + dataFile + "</div></td>"
-print "</tr>"
+	print "<div align=\"center\" class=\"fontDiv\" style=\"color: #a3a3a3;\">Database: " + dataFile + "</div>"
+print "</td></tr>"
 print "<tr><td><input style=\"display: block; width: 100%;\" class=\"refButton\" onclick=\"window.location.href='control.html?operation=1'\" type=\"button\" value=\"convert address to GPS (all database entries)\"></td></tr>"
 print "<tr><td><input style=\"display: block; width: 100%;\" class=\"refButton\" onclick=\"window.location.href='index.html'\" type=\"button\" value=\"set signature\"></td></tr>"
+print "<tr><td><div></div></td></tr>"
+print "<tr><td>"
+print "<table border=\"0\" width=\"100%\">"
+print "<tr>"
+print "<td colspan=\"2\" height=\"30px\">"
+if operation == 2:
+	print "<div id=\"effect\" class=\"ui-widget-content ui-corner-all\">Database files merged.</div>"
+	print "<script>setTimeout(function(){window.location.href='control.html';}, 5000);</script>"
+else:
+	print "<div align=\"center\" class=\"fontDiv\" style=\"color: #a3a3a3;\">Merge Database Files</div>"
+
+print "</td></tr>"
+print "<tr>"
+print "<td style=\"background: #aaaaaa; border-radius: 5px; padding: 0.4em;\"><div class=\"fontDiv\">"
+files = os.listdir("data/merge/")
+filesForScript = ""
+if len(files) == 0:
+	print "No database files."
+for f in files:
+	print f + "<br>"
+	filesForScript += f + " "
+print "</div></td>"
+		
+if operation == 2:
+	os.system("./merge.py " + filesForScript + "-s")
+
+print "<td>"
+if len(files) != 0:
+	print "<input style=\"display: block; width: 100%;\" class=\"refButton\" onclick=\"window.location.href='control.html?operation=2'\" type=\"button\" value=\"merge\">"
+print "</td>"
+print "</tr>"
+print "</table>"
+print "</td></tr>"
 print "<tr><td><div></div></td></tr>"
 print "<tr><td><input style=\"display: block; width: 100%;\" class=\"button\" onclick=\"window.location.href='menu.html'\" type=\"button\" value=\"back\"></td></tr>"
 print "</td>"

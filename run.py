@@ -71,6 +71,8 @@ else:
 
 		print "webinterface:" +  myTool.blue + "\t[-web|--webinterface]" + myTool.stop + "\tStart webserver to analyse collected data"
 
+		print "Database:" +  myTool.blue + "\t[-me|--merge]" + myTool.stop + "\t\tMerge different database files to one"		
+
 		print "others:" + myTool.blue + "\t\t[-h|--help]" + myTool.stop + "\t\tPrints this help menu"
 		print myTool.blue + "\t\t[-m|--monitor]" + myTool.stop + "\t\tChange mode of selected interface to \"monitor\""
 		print myTool.blue + "\t\t[-p|--privacy]" + myTool.stop + "\t\tIf you set this parameter all collected personal data will be scrambled."                
@@ -88,6 +90,26 @@ else:
                 os.system("iwconfig " + interface + " mode monitor")
                 os.system("ifconfig " + interface + " up")
                 print myTool.green + "[+] " + myTool.stop + "Monitor interface started."
+
+	# start the merge script
+	if "-me" in sys.argv or "--merge" in sys.argv:
+		print myTool.warning + "[!] " + myTool.stop + "IMPORTANT: Before you start, take care that all files you want to merge are located inside the data/merge directory."
+		files = os.listdir("data/merge/")
+		fileString = ""
+		for f in files:
+			fileString += f + " "
+		if fileString != "":
+			print myTool.warning + "[!] " + myTool.stop + "Merging the following files: " + fileString
+			cont = raw_input("# Continue? (yes: y, no: n) ")
+			if cont == "y":
+				print myTool.green + "[+] " + myTool.stop + "Calling merge.py..."
+				os.system("./merge.py " + fileString)
+				print myTool.green + "[+] " + myTool.stop + "Merging completed."
+			else:
+				print myTool.warning + "[!] " + myTool.stop + "Abort."
+		else:
+			print myTool.fail + "[-] " + myTool.stop + "No files to merge! data/merge is empty."
+		sys.exit()
 
 	# start evaluation webinterface
         if "-web" in sys.argv or "--webinterface" in sys.argv:

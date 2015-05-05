@@ -39,6 +39,11 @@ try:
 except:
         print myTool.fail + "[-] " + myTool.stop + "CHMOD(+x): scan.py -> FAIL!"
 try:
+	os.system("chmod +x merge.py")
+	print myTool.green + "[+] " + myTool.stop + "CHMOD(+x): merge.py -> Success!"
+except:
+	print myTool.fail + "[-] " + myTool.stop + "CHMOD(+x): merge.py -> FAIL!"
+try:
 	os.system("chmod +x cgi-bin/index.html")
 	print myTool.green + "[+] " + myTool.stop + "CHMOD(+x): cgi-bin/index.html -> Success!"
 except:
