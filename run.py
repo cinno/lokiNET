@@ -39,6 +39,7 @@ privacy = 0
 silentArray = []
 silent = 0
 path = os.path.split(os.path.realpath(__file__))[0]
+silentString = 0
 
 
 def createDatabaseFile(sig):
@@ -76,12 +77,20 @@ else:
 
 		print "Database:" +  myTool.blue + "\t[-me|--merge]" + myTool.stop + "\t\tMerge different database files to one"		
 
+		print "Silent Mode:" + myTool.blue + "\t[-pc|--print-crontab]" + myTool.stop + "\tJust creates a silent mode string. You can use it for adding the program to your cronjobs."		
+		print myTool.blue + "\t\t[-s|--silent]" + myTool.stop + "\t\tEnable silent mode. In silent mode no console output will be generated.\n\t\t\t\t\tTo make sure the script works fine you need to put the silent flag at the end of the parameters followed by all needed input."		
+
 		print "others:" + myTool.blue + "\t\t[-h|--help]" + myTool.stop + "\t\tPrints this help menu"
 		print myTool.blue + "\t\t[-m|--monitor]" + myTool.stop + "\t\tChange mode of selected interface to \"monitor\""
 		print myTool.blue + "\t\t[-p|--privacy]" + myTool.stop + "\t\tIf you set this parameter all collected personal data will be scrambled."
-		print myTool.blue + "\t\t[-s|--silent]" + myTool.stop + "\t\tEnable silent mode. In silent mode no console output will be generated.\n\t\t\t\t\tTo make sure the script works fine you need to put the silent flag at the end of the parameters followed by all needed input."		
 		print ""
 		sys.exit()
+
+	# print silent string
+	if "-pc" in sys.argv or "--print-crontab" in sys.argv:
+		silentString = 1
+		if silent == 0:
+			print myTool.green + "[+] " + myTool.stop + "Only generate a silent string for your crontab."		
 
 	# silent mode configuration
 	if "-s" in sys.argv or "--silent" in sys.argv:
@@ -200,6 +209,20 @@ else:
 			streetnumber = silentArray[4]
 			signature = silentArray[5]
 		
+		if silentString == 1:
+			mon = " "
+			priv = " "
+			offOn = " "
+			if "-m" in sys.argv or "--monitor" in sys.argv:
+				mon = " -m "
+			if "-p" in sys.argv or "--privacy" in sys.argv:
+				priv = " -p "
+			if offlineOrOnline != "offline":
+				offOn = " -on "
+			print "\n" + myTool.green + "[+] Crontab String: " + myTool.stop + "@reboot python " + path + "/run.py " + interface + mon + offOn + priv + "-s " + country + " " + zipcode + " " + city + " " + street + " " + streetnumber + " " + signature
+			print myTool.green + "[+]" + myTool.stop + " This string can be added to your devices crontab (crontab -e) to run it automatically on startup."
+			sys.exit(0)
+		
 		createDatabaseFile(signature)
 		
 		# save new location to database
@@ -249,6 +272,20 @@ else:
 			gpsl = silentArray[0]
 			gpsw = silentArray[1]
 			signature = silentArray[2]
+		
+		if silentString == 1:
+			mon = " "
+			priv = " "
+			offOn = " "
+			if "-m" in sys.argv or "--monitor" in sys.argv:
+				mon = " -m "
+			if "-p" in sys.argv or "--privacy" in sys.argv:
+				priv = " -p "	
+			if offlineOrOnline != "offline":
+				offOn = " -on "			
+			print "\n" + myTool.green + "[+] Crontab String: " + myTool.stop + "@reboot python " + path + "/run.py " + interface + mon + offOn + priv + "-gps -s " + gpsl + " " + gpsw + " " + signature
+			print myTool.green + "[+]" + myTool.stop + " This string can be added to your devices crontab (crontab -e) to run it automatically on startup."
+			sys.exit(0)		
 		
 		createDatabaseFile(signature)
 		connection = sqlite3.connect(path + "/data/" + signature + "Data.db")
