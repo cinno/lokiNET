@@ -70,3 +70,10 @@ except:
 	print myTool.fail + "[-] " + myTool.stop + "CHMOD(+x): cgi-bin/largemap.html -> FAIL!"
 
 print myTool.green + "[+] " + myTool.stop + "All chmods set."
+print ""
+
+if not os.path.exists("data/merge"):
+	os.makedirs("data/merge")
+	print myTool.green + "[+] " + myTool.stop + "Folder data/merge created."
+else:
+	print myTool.warning + "[!] " + myTool.stop + "Folder data/merge already exists. Skipping..."
