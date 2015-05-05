@@ -38,14 +38,15 @@ dataFile = "Data.db"
 privacy = 0
 silentArray = []
 silent = 0
+path = os.path.split(os.path.realpath(__file__))[0]
 
 
 def createDatabaseFile(sig):
 	# check if copy file already exists
-	if os.path.isfile("data/" +  sig + dataFile):
+	if os.path.isfile(path + "/data/" +  sig + dataFile):
 		pass
 	else:
-		os.system("cp data/dataTemplate.db data/" + sig + dataFile)	
+		os.system("cp " + path + "/data/dataTemplate.db " + path + "/data/" + sig + dataFile)	
 
 def ctrlc_handler(self, frm):
         if "-m" in sys.argv or "--monitor" in sys.argv:
@@ -111,7 +112,7 @@ else:
 	# start the merge script
 	if "-me" in sys.argv or "--merge" in sys.argv:
 		print myTool.warning + "[!] " + myTool.stop + "IMPORTANT: Before you start, take care that all files you want to merge are located inside the data/merge directory."
-		files = os.listdir("data/merge/")
+		files = os.listdir(path + "/data/merge/")
 		fileString = ""
 		for f in files:
 			fileString += f + " "
@@ -202,7 +203,7 @@ else:
 		createDatabaseFile(signature)
 		
 		# save new location to database
-		connection = sqlite3.connect("data/" + signature + "Data.db")
+		connection = sqlite3.connect(path + "/data/" + signature + "Data.db")
 		connectionCursor = connection.cursor()
 
 		# test if location is already in database
@@ -234,7 +235,7 @@ else:
 				print myTool.warning + "[!] " + myTool.stop + "Location already exists in database. Using saved entry instead of saving a new one."
 		
 		# execute scan script
-		os.system("./scan.py " + interface + " " + signature + " " + str(maxLocationId) + " " + str(privacy) + " " + str(silent))
+		os.system(path + "/scan.py " + interface + " " + signature + " " + str(maxLocationId) + " " + str(privacy) + " " + str(silent))
 	else:
 		# direct GPS input
 		if silent == 0:
@@ -250,7 +251,7 @@ else:
 			signature = silentArray[2]
 		
 		createDatabaseFile(signature)
-		connection = sqlite3.connect("data/" + signature + "Data.db")
+		connection = sqlite3.connect(path + "/data/" + signature + "Data.db")
 		connectionCursor = connection.cursor()		
 		
 		# test if location is already in database
@@ -273,4 +274,4 @@ else:
 				print myTool.warning + "[!] " + myTool.stop + "Location already exists in database. Using saved entry instead of saving a new one."
 		
 		# execute scan script
-		os.system("./scan.py " + interface + " " + signature + " " + str(maxLocationId) + " " + str(privacy) + " " + str(silent))
+		os.system(path + "/scan.py " + interface + " " + signature + " " + str(maxLocationId) + " " + str(privacy) + " " + str(silent))

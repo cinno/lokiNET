@@ -42,6 +42,7 @@ dataFile = signature + "Data.db"
 locationID = int(sys.argv[3])
 ssids = set()
 clientAPSet = set()
+path = os.path.split(os.path.realpath(__file__))[0]
 
 
 def dbSelectCommit(statement):
@@ -208,7 +209,7 @@ def pktHandler(pkt):
 			temp = temp.payload
 
 # connect to local database file
-connection = sqlite3.connect("data/" + dataFile)
+connection = sqlite3.connect(path + "/data/" + dataFile)
 connectionCursor = connection.cursor()
 
 # channel hopping
