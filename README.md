@@ -1,6 +1,17 @@
 ![alt tag](http://danielhaake.de/logoLokiReadme.png)
 <i>Version 1.10.16 - Release: Sword</i>
 <hr>
+<h2>Table of Content:</h2>
+<a href="#about">About</a><br />
+<a href="#scenario">Scenario</a><br />
+<a href="#requirements">Requirements</a><br />
+<a href="#installation">Installation</a><br />
+<a href="#usage-examples">Usage Examples</a><br />
+<a href="#privacy-mode">Privacy Mode</a><br />
+<a href="#silent-mode">Silent Mode</a><br />
+<a href="#merge-script">Merge Script</a><br />
+<a href="#license">License</a>
+<hr>
 <h2>About:</h2>
 Location-based service which observes and stores all the different wireless devices and their properties around. Should be used at different locations simultaneously to be effective<br>
 The application consists of three different parts: control script, scanengine and webinterface.
