@@ -19,6 +19,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ########################################################################
 
+import time
 import datetime
 import cgi
 from classes.tools import tools
@@ -175,7 +176,7 @@ if checkC == "on" or search == "":
         print "<td width=\"150px\" align=\"center\"><input type=\"checkbox\" id=\"check2\" name=\"checkC\" checked><label for=\"check2\"><div class=\"fontDiv\">connections</div></label></td>"
 else:
         print "<td width=\"150px\" align=\"center\"><input type=\"checkbox\" id=\"check2\" name=\"checkC\"><label for=\"check2\"><div class=\"fontDiv\">connections</div></label></td>"
-print "<td><input style=\"display: block;\" name=\"time\" class=\"input\" placeholder=\"younger then (in seconds)\" value=\"" + timeSubmit + "\"></td>"
+print "<td><input style=\"display: block;\" name=\"time\" class=\"input\" placeholder=\"younger then (in hours)\" value=\"" + timeSubmit + "\"></td>"
 print "<td width=\"150px\" align=\"center\"><input style=\"display: block; width: 100px;\" class=\"refButton\" type=\"submit\" value=\"search\"></td>"
 print "</form></tr>"
 print "<tr><td colspan=\"6\">"
@@ -186,18 +187,33 @@ print "<div id=\"map\" style=\"width: 1024px; height: 550px;\"></div>"
 
 if search != "":
         locationSet = set()
-        if checkAP == "on":
-                locations = myTool.dbSelect(connectionCursor, "select locationId from accesspoints where bssid=\"" + search + "\" or essid=\"" + search + "\"")
-                for i in locations:
-                        locationSet.add(i[0])
-        if checkC == "on":
-                locations = myTool.dbSelect(connectionCursor, "select locationID from connections where macOne=\"" + search + "\" or macTwo=\"" + search + "\"")
-                for i in locations:
-                        locationSet.add(i[0])
-        if checkCP == "on":
-                locations = myTool.dbSelect(connectionCursor, "select locationId from clientProbes where clientMac=\"" + search + "\" or probe=\"" + search + "\"")
-                for i in locations:
-                        locationSet.add(i[0])
+        timeDifference = time.time()
+        if timeSubmit == "":
+                if checkAP == "on":
+                        locations = myTool.dbSelect(connectionCursor, "select locationId from accesspoints where bssid=\"" + search + "\" or essid=\"" + search + "\"")
+                        for i in locations:
+                                locationSet.add(i[0])
+                if checkC == "on":
+                        locations = myTool.dbSelect(connectionCursor, "select locationID from connections where macOne=\"" + search + "\" or macTwo=\"" + search + "\"")
+                        for i in locations:
+                                locationSet.add(i[0])
+                if checkCP == "on":
+                        locations = myTool.dbSelect(connectionCursor, "select locationId from clientProbes where clientMac=\"" + search + "\" or probe=\"" + search + "\"")
+                        for i in locations:
+                                locationSet.add(i[0])
+        else:
+                if checkAP == "on":
+                        locations = myTool.dbSelect(connectionCursor, "select locationId from accesspoints where (bssid=\"" + search + "\" or essid=\"" + search + "\") and " + str(timeDifference) + " -  time < " + str(int(timeSubmit)*3600))
+                        for i in locations:
+                                locationSet.add(i[0])
+                if checkC == "on":
+                        locations = myTool.dbSelect(connectionCursor, "select locationID from connections where (macOne=\"" + search + "\" or macTwo=\"" + search + "\") and " + str(timeDifference) + " -  timeLast < " + str(int(timeSubmit)*3600))
+                        for i in locations:
+                                locationSet.add(i[0])
+                if checkCP == "on":
+                        locations = myTool.dbSelect(connectionCursor, "select locationId from clientProbes where (clientMac=\"" + search + "\" or probe=\"" + search + "\") and " + str(timeDifference) + " -  timeLast < " + str(int(timeSubmit)*3600))
+                        for i in locations:
+                                locationSet.add(i[0])
         # build where clause
         whereString = ""
         for item in locationSet:
