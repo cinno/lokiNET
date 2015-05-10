@@ -29,6 +29,22 @@ try:
         search = cgi.escape(arguments["search"].value)
 except:
         search = ""
+try:
+        timeSubmit = cgi.escape(arguments["time"].value)
+except:
+        timeSubmit = ""
+try:
+        checkAP = cgi.escape(arguments["checkAP"].value)
+except:
+        checkAP = ""
+try:
+        checkCP = cgi.escape(arguments["checkCP"].value)
+except:
+        checkCP = ""
+try:
+        checkC = cgi.escape(arguments["checkC"].value)
+except:
+        checkC = ""
 
 myTool = tools()
 connectionCursor = myTool.connectToDatabase()
@@ -82,17 +98,25 @@ print "}"
 print "});"
 print "$(function() {"
 print "var data = ["
-for row in allMacsAPs:
-        print "{ label: \"" + str(row[0]) + "\", category: \"BSSID\" },"
-for row in allEssidsAPs:
-        print "{ label: \"" + u''.join((row[0])).encode('utf-8') + "\", category: \"ESSID\" },"
-for row in allMacsCPs:
-        print "{ label: \"" + str(row[0]) + "\", category: \"client MAC\" },"
-for row in connectionMACs:
-        print "{ label: \"" + str(row) + "\", category: \"connection MAC\" },"
-for row in allProbes:
-        print "{ label: \"" + u''.join((row[0])).encode('utf-8') + "\", category: \"client probes\" },"
+if checkAP == "on" or search == "":
+        for row in allMacsAPs:
+                print "{ label: \"" + str(row[0]) + "\", category: \"BSSID\" },"
+if checkAP == "on" or search == "":
+        for row in allEssidsAPs:
+                print "{ label: \"" + u''.join((row[0])).encode('utf-8') + "\", category: \"ESSID\" },"
+if checkCP == "on" or search == "":
+        for row in allMacsCPs:
+                print "{ label: \"" + str(row[0]) + "\", category: \"client MAC\" },"
+if checkC == "on" or search == "":
+        for row in connectionMACs:
+                print "{ label: \"" + str(row) + "\", category: \"connection MAC\" },"
+if checkCP == "on" or search == "":
+        for row in allProbes:
+                print "{ label: \"" + u''.join((row[0])).encode('utf-8') + "\", category: \"client probes\" },"
 print "];"
+print "$( \"#check\" ).button();"
+print "$( \"#check1\" ).button();"
+print "$( \"#check2\" ).button();"
 print "$( \"#search\" ).catcomplete({"
 print "delay: 0,"
 print "source: data"
@@ -138,8 +162,23 @@ print "<tr><td height=\"20%\"><img src=\"../webfiles/logo.png\" width=\"50%\"></
 print "<tr>"
 print "<td>"
 print "<table border=\"0\" width=\"350px\" style=\"background: #d3d3d3; border-radius: 5px;\">"
-print "<tr><form method=\"get\"><td><input style=\"display: block;\" name=\"search\" class=\"input\" value=\"" + search + "\" id=\"search\" placeholder=\"search\"></td><td><input style=\"display: block; width: 100px;\" class=\"refButton\" type=\"submit\" value=\"search\"></td></form></tr>"
-print "<tr><td colspan=\"2\">"
+print "<tr><form method=\"get\"><td><input style=\"display: block;\" name=\"search\" class=\"input\" value=\"" + search + "\" id=\"search\" placeholder=\"search\"></td>"
+if checkAP == "on" or search == "":
+        print "<td width=\"150px\" align=\"center\"><input type=\"checkbox\" id=\"check\" name=\"checkAP\" checked><label for=\"check\"><div class=\"fontDiv\">access points</div></label></td>"
+else:
+        print "<td width=\"150px\" align=\"center\"><input type=\"checkbox\" id=\"check\" name=\"checkAP\"><label for=\"check\"><div class=\"fontDiv\">access points</div></label></td>"
+if checkCP == "on" or search == "":
+        print "<td width=\"150px\" align=\"center\"><input type=\"checkbox\" id=\"check1\" name=\"checkCP\" checked><label for=\"check1\"><div class=\"fontDiv\">client probes</div></label></td>"
+else:
+        print "<td width=\"150px\" align=\"center\"><input type=\"checkbox\" id=\"check1\" name=\"checkCP\"><label for=\"check1\"><div class=\"fontDiv\">client probes</div></label></td>"
+if checkC == "on" or search == "":
+        print "<td width=\"150px\" align=\"center\"><input type=\"checkbox\" id=\"check2\" name=\"checkC\" checked><label for=\"check2\"><div class=\"fontDiv\">connections</div></label></td>"
+else:
+        print "<td width=\"150px\" align=\"center\"><input type=\"checkbox\" id=\"check2\" name=\"checkC\"><label for=\"check2\"><div class=\"fontDiv\">connections</div></label></td>"
+print "<td><input style=\"display: block;\" name=\"time\" class=\"input\" placeholder=\"younger then (in seconds)\" value=\"" + timeSubmit + "\"></td>"
+print "<td width=\"150px\" align=\"center\"><input style=\"display: block; width: 100px;\" class=\"refButton\" type=\"submit\" value=\"search\"></td>"
+print "</form></tr>"
+print "<tr><td colspan=\"6\">"
 
 # include map header
 print "<script src=\"http://maps.google.com/maps/api/js?sensor=false\" type=\"text/javascript\"></script>"
@@ -147,15 +186,18 @@ print "<div id=\"map\" style=\"width: 1024px; height: 550px;\"></div>"
 
 if search != "":
         locationSet = set()
-        locations = myTool.dbSelect(connectionCursor, "select locationId from accesspoints where bssid=\"" + search + "\" or essid=\"" + search + "\"")
-        for i in locations:
-                locationSet.add(i[0])
-        locations = myTool.dbSelect(connectionCursor, "select locationID from connections where macOne=\"" + search + "\" or macTwo=\"" + search + "\"")
-        for i in locations:
-                locationSet.add(i[0])
-        locations = myTool.dbSelect(connectionCursor, "select locationId from clientProbes where clientMac=\"" + search + "\" or probe=\"" + search + "\"")
-        for i in locations:
-                locationSet.add(i[0])
+        if checkAP == "on":
+                locations = myTool.dbSelect(connectionCursor, "select locationId from accesspoints where bssid=\"" + search + "\" or essid=\"" + search + "\"")
+                for i in locations:
+                        locationSet.add(i[0])
+        if checkC == "on":
+                locations = myTool.dbSelect(connectionCursor, "select locationID from connections where macOne=\"" + search + "\" or macTwo=\"" + search + "\"")
+                for i in locations:
+                        locationSet.add(i[0])
+        if checkCP == "on":
+                locations = myTool.dbSelect(connectionCursor, "select locationId from clientProbes where clientMac=\"" + search + "\" or probe=\"" + search + "\"")
+                for i in locations:
+                        locationSet.add(i[0])
         # build where clause
         whereString = ""
         for item in locationSet:
@@ -163,6 +205,8 @@ if search != "":
                         whereString += "ID=\"" + str(item) + "\""
                 else:
                         whereString += " or ID=\"" + str(item) + "\""
+        if whereString == "":
+                whereString = "1<>1"
         resultAllLocations = myTool.dbSelect(connectionCursor, "select country, zipcode, city, street, streetnumber, gpsl, gpsw, time from locations where " + whereString)
 else:
         # get all the locations from database
@@ -173,11 +217,11 @@ count = 0
 # get location details
 for loc in range(1, len(resultAllLocations) + 1):
         numAPs = myTool.dbSelect(connectionCursor, "select ID from accesspoints where locationID=\"" + str(loc) + "\"")
-        numProbes = myTool.dbSelect(connectionCursor, "select ID from clientProbes where locationID=\"" + str(loc) + "\"")        
-        numConnections = myTool.dbSelect(connectionCursor, "select ID from connections where locationID=\"" + str(loc) + "\"")   
+        numProbes = myTool.dbSelect(connectionCursor, "select ID from clientProbes where locationID=\"" + str(loc) + "\"")
+        numConnections = myTool.dbSelect(connectionCursor, "select ID from connections where locationID=\"" + str(loc) + "\"")
         details.insert(count, "<p>Access Points: " + str(len(numAPs)) + "<br>Probes: " + str(len(numProbes)) + "<br>Connections: " + str(len(numConnections)))
         count += 1
-        
+
 locString = "<script type=\"text/javascript\">\nvar locations = [\n"
 run = 1
 l = 0
@@ -189,8 +233,12 @@ for tupel in resultAllLocations:
         w += float(tupel[6])
 locString = locString[:len(locString)-2:]
 locString += "\n];"
-middlePositionL = l / (run - 1)
-middlePositionW = w / (run - 1)
+try:
+        middlePositionL = l / (run - 1)
+        middlePositionW = w / (run - 1)
+except:
+        middlePositionL = 0
+        middlePositionW = 0
 print locString
 
 print "var map = new google.maps.Map(document.getElementById('map'), {"
@@ -215,7 +263,7 @@ print "}"
 print "</script>"
 
 print "</td></tr>"
-print "<tr><td width=\"20%\"><input style=\"display: block; width: 100%;\" class=\"button\" onclick=\"window.location.href='menu.html'\" type=\"button\" value=\"back\"></td><td></td></tr>"
+print "<tr><td width=\"20%\"><input style=\"display: block; width: 100%;\" class=\"button\" onclick=\"window.location.href='menu.html'\" type=\"button\" value=\"back\"></td><td colspan=\"4\"></td><td width=\"150px\"><input style=\"display: block; width: 100%;\" class=\"button\" onclick=\"window.location.href='largemap.html'\" type=\"button\" value=\"reset filter\"></td></tr>"
 print "</table>"
 print "</body>"
 print "</html>"
