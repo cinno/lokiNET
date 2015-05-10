@@ -25,7 +25,7 @@ This application is part of my master thesis.
 <hr>
 <h2>Scenario:</h2>
 An attacker may create some small linux devices where this software is installed and configured. Then he places the devices at different locations and let them do their "work". After a while he collect the devices, migrates all database files to one and analyzes the data. Then he is able to reconstruct wifi client movements and behaviour.<p>
-example device (TP-Link TL-MR3020 with pivot root on USB stick and openWRT):
+example device (TP-Link TL-MR3020 with pivot root on USB flash drive and openWRT):
 ![alt tag](http://danielhaake.de/loki.jpg)</p>
 <hr>
 <h2>Requirements:</h2>
