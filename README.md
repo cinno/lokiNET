@@ -1,4 +1,4 @@
-<h1>lokiNET</h1>
+![alt tag](http://danielhaake.de/logoLokiReadme.png)
 <i>Version 1.10.16 - Release: Sword</i>
 <hr>
 <h2>About:</h2>
@@ -13,7 +13,9 @@ This application is part of my master thesis.
 </ul>
 <hr>
 <h2>Scenario:</h2>
-An attacker may create some small linux devices where this software is installed and configured. Then he places the devices at different locations and let them do their "work". After a while he collect the devices, migrates all database files to one and analyzes the data. Then he is able to reconstruct wifi client movements and behaviour.
+An attacker may create some small linux devices where this software is installed and configured. Then he places the devices at different locations and let them do their "work". After a while he collect the devices, migrates all database files to one and analyzes the data. Then he is able to reconstruct wifi client movements and behaviour.<p>
+example device (TP-Link TL-MR3020 with pivot root on USB stick and openWRT):
+![alt tag](http://danielhaake.de/loki.jpg)</p>
 <hr>
 <h2>Requirements:</h2>
 <ul>
