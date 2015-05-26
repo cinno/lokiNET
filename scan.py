@@ -26,10 +26,9 @@ from scapy.all import *
 import sqlite3
 import time
 import datetime
-from itertools import cycle, izip
-import base64
+import md5
 
- 
+
 myTool = tools()
 clientProbes = set()
 currentTimestamp = time.time()
@@ -47,11 +46,11 @@ path = os.path.split(os.path.realpath(__file__))[0]
 
 def dbSelectCommit(statement):
 	connectionCursor.execute(statement)
-	return connectionCursor.fetchall()	
+	return connectionCursor.fetchall()
 
 def dbChangeCommit(statement):
 	connectionCursor.execute(statement)
-	connection.commit()	
+	connection.commit()
 
 def extractTransmissionPower(packet):
 	power = "0"
@@ -76,17 +75,17 @@ def pktHandler(pkt):
 			if curPkt.addr1 != "ff:ff:ff:ff:ff:ff" and curPkt.addr2 != "ff:ff:ff:ff:ff:ff" and curPkt.addr2 != "00:00:00:00:00:00" and curPkt.addr1 != "00:00:00:00:00:00":
 				address1 = curPkt.addr1
 				address2 = curPkt.addr2
-				
+
 				if privacy == 1:
-					address1 = base64.b64encode(''.join(chr(ord(c)^ord(k)) for c,k in izip(address1, cycle(signature))))
-					address2 = base64.b64encode(''.join(chr(ord(c)^ord(k)) for c,k in izip(address2, cycle(signature))))
-				
+					address1 = md5.new(signature + address1).hexdigest()
+			                address2 = md5.new(signature + address2).hexdigest()
+
 				comb1 = address1 + " " + address2
 				comb2 = address2 + " " + address1
-	
+
 				# look if combination is already in database
 				combInDB = 0
-				combInDatabase = dbSelectCommit("select ID from connections where macOne=\"" + address1 + "\" and macTwo=\"" + address2 + "\"")	
+				combInDatabase = dbSelectCommit("select ID from connections where macOne=\"" + address1 + "\" and macTwo=\"" + address2 + "\"")
 				if len(combInDatabase) != 0:
 					combInDB = 1
 				combInDatabase = dbSelectCommit("select ID from connections where macOne=\"" + address2 + "\" and macTwo=\"" + address1 + "\"")
@@ -95,18 +94,18 @@ def pktHandler(pkt):
 				if comb1 not in clientAPSet and comb2 not in clientAPSet and combInDB == 0:
 					clientAPSet.add(comb1)
 					clientAPSet.add(comb2)
-	
+
 					# extract transmission power
 					power = extractTransmissionPower(pkt)
 					if silent == 0:
 						print myTool.green + "[+] " + myTool.stop + str(currentDateAndTime) + ": Data exchange between " + address1 + " and " + address2 + " (" + str(int(len(clientAPSet)/2)) + "):"
 						print myTool.green + "[+] " + myTool.stop + "power --> " + power
 						print ""
-	
+
 					# save tupel data to database
 					dbChangeCommit("insert into connections (macOne, macTwo, power, locationId, timeFirst, timeLast) values (\"" + address1 + "\", \"" + address2 + "\", \"" + power + "\", \"" + str(locationID) + "\", \"" + str(currentTimestamp) + "\", \"" + str(currentTimestamp) +  "\")")
 				else:
-					dbChangeCommit("UPDATE connections SET timeLast='" + str(currentTimestamp) + "' WHERE macOne='" + address1 + "' AND macTwo='" + address2 + "'")					
+					dbChangeCommit("UPDATE connections SET timeLast='" + str(currentTimestamp) + "' WHERE macOne='" + address1 + "' AND macTwo='" + address2 + "'")
 					dbChangeCommit("UPDATE connections SET timeLast='" + str(currentTimestamp) + "' WHERE macOne='" + address2 + "' AND macTwo='" + address1 + "'")
 
 	# scan for probe requests
@@ -115,12 +114,12 @@ def pktHandler(pkt):
  		if len(pkt.getlayer(Dot11ProbeReq).info) > 0:
 			curSSID = pkt.getlayer(Dot11ProbeReq).info
 		clientMac = pkt.getlayer(Dot11).addr2
-		
+
 		if privacy == 1:
-			clientMac = base64.b64encode(''.join(chr(ord(c)^ord(k)) for c,k in izip(pkt.getlayer(Dot11).addr2, cycle(signature))))
+			clientMac = md5.new(signature + str(clientMac)).hexdigest()
 			if curSSID != "[broadcast]":
-				curSSID = base64.b64encode(''.join(chr(ord(c)^ord(k)) for c,k in izip(pkt.getlayer(Dot11).addr2, cycle(signature))))				
-		newCombination = clientMac + " " + curSSID
+				curSSID = md5.new(signature + curSSID).hexdigest()
+	        newCombination = clientMac + " " + curSSID
 		# look if combination is already in database
 		combInDatabase = dbSelectCommit("select ID from clientProbes where clientMac=\"" + clientMac + "\" and probe=\"" + curSSID + "\"")
 		if newCombination not in clientProbes and len(combInDatabase) == 0:
@@ -128,7 +127,7 @@ def pktHandler(pkt):
 
 			# extract transmission power
 			power = extractTransmissionPower(pkt)
-    
+
 			if silent == 0:
 				print myTool.green + "[+] " + myTool.stop + str(currentDateAndTime) + ": Discovered new unique probe request (" + str(len(clientProbes)) + "): "
 			if privacy == 0:
@@ -164,8 +163,8 @@ def pktHandler(pkt):
 					power = extractTransmissionPower(pkt)
 
 					channel = str(int(temp.info.encode("hex"), 16))
-					
-					if silent == 0:			
+
+					if silent == 0:
 						print myTool.green + "[+] " + myTool.stop + str(currentDateAndTime) + ": Discovered Accesspoint (" + str(len(ssids)) + "):"
 					if privacy == 0:
 						bssid = pkt.getlayer(Dot11).addr3
@@ -173,17 +172,17 @@ def pktHandler(pkt):
 							print myTool.green + "[+] " + myTool.stop + "BSSID --> " + bssid
 							print myTool.green + "[+] " + myTool.stop + "ESSID --> " + currSSID
 					else:
-						bssid = base64.b64encode(''.join(chr(ord(c)^ord(k)) for c,k in izip(pkt.getlayer(Dot11).addr3, cycle(signature))))
+						bssid = md5.new(signature + str(pkt.getlayer(Dot11).addr3)).hexdigest()
 						if silent == 0:
 							print myTool.green + "[+] " + myTool.stop + "scrambled BSSID --> " + bssid
 						if currSSID != "[hidden]":
-							currSSID = base64.b64encode(''.join(chr(ord(c)^ord(k)) for c,k in izip(currSSID, cycle(signature))))
+							currSSID = md5.new(signature + currSSID).hexdigest()
 						if silent == 0:
-							print myTool.green + "[+] " + myTool.stop + "scrambled ESSID --> " + currSSID					
+							print myTool.green + "[+] " + myTool.stop + "scrambled ESSID --> " + currSSID
 					if silent == 0:
 						print myTool.green + "[+] " + myTool.stop + "channel --> " + channel
 						print myTool.green + "[+] " + myTool.stop + "power --> " + power
-			
+
 					cap = pkt.sprintf("{Dot11Beacon:%Dot11Beacon.cap%}\{Dot11ProbeResp:%Dot11ProbeResp.cap%}")
 					if re.search("privacy", cap):
 						encryption = "Yes"
@@ -192,11 +191,11 @@ def pktHandler(pkt):
 					if silent == 0:
 						print myTool.green + "[+] " + myTool.stop + "encryption --> " + encryption
 						print ""
-			
+
 					dbChangeCommit("insert into accesspoints (bssid, essid, channel, power, locationId, encryption, time) values (\"" + bssid + "\", \"" + currSSID + "\", \"" + channel + "\", \"" + power + "\", \"" + str(locationID) + "\", \"" + encryption + "\", \"" + str(currentTimestamp) + "\")")
-			
+
 					break
-							
+
 				# save SSID
 				if temp.ID == 0:
 					ssids.add(bssidEssidPair)
@@ -205,7 +204,7 @@ def pktHandler(pkt):
 					for byte in bytearray(currSSID):
 						if byte == 0:
 							currSSID = "[hidden]"
-			
+
 			temp = temp.payload
 
 # connect to local database file
@@ -220,7 +219,7 @@ while True:
 
 		currentTimestamp = time.time()
 		currentDateAndTime = datetime.datetime.fromtimestamp(currentTimestamp).strftime("%Y-%m-%d %H:%M:%S")
-                        
+
 		pkt = sniff(iface=interface, count=1, prn=pktHandler)
 connection.close()
 sys.exit(0)
