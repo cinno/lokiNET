@@ -71,7 +71,7 @@ def pktHandler(pkt):
 	# scan for datapackets
 	if pkt.haslayer(Dot11):
 		curPkt = pkt.getlayer(Dot11)
-		if curPkt.type == long(2L):
+		if curPkt.type == 2:
 			if curPkt.addr1 != "ff:ff:ff:ff:ff:ff" and curPkt.addr2 != "ff:ff:ff:ff:ff:ff" and curPkt.addr2 != "00:00:00:00:00:00" and curPkt.addr1 != "00:00:00:00:00:00":
 				address1 = curPkt.addr1
 				address2 = curPkt.addr2
